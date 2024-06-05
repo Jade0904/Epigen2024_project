@@ -1,7 +1,7 @@
-name: "Epigen2024_project"
+name: Epigen2024_project
 output_dir: ../docs
 navbar:
-  title: "Epigen2024_project"
+  title: Epigen2024_project
   left:
   - text: Home
     href: index.html
@@ -9,6 +9,10 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+  right:
+  - icon: fab fa-github
+    text: Source code
+    href: https://github.com/Jade0904/Epigen2024_project
 output:
   workflowr::wflow_html:
     toc: yes
