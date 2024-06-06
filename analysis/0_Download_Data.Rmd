@@ -1,0 +1,20 @@
+---
+title: "0_Download_Data"
+author: "Zhihan Zhu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, eval=FALSE}
+# download ChIP-seq narrowpeak files
+
+# GR ChIP-seq
+download.file("https://www.encodeproject.org/files/ENCFF835HHK/@@download/ENCFF835HHK.bed.gz", dest = "../data/GR_t1_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF524BFG/@@download/ENCFF524BFG.bed.gz", dest = "../data/JUN_t1_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF692MOZ/@@download/ENCFF692MOZ.bed.gz", dest = "../data/JUNB_t1_rep2.bed.gz")
+```
+
