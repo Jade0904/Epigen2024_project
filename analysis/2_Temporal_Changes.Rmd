@@ -1,0 +1,272 @@
+---
+title: "2_Temporal_Changes"
+author: "Zhihan Zhu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# import useful packages
+suppressPackageStartupMessages({
+  library(epiwraps)
+  library(motifmatchr)
+  library(MotifDb)
+  library(universalmotif)
+  library(sechm)
+  library(BiocParallel)
+  library(ggplot2)
+  library(chromVAR) # for motif accessibility estimation
+  library(SummarizedExperiment) # data structure
+  library(edgeR)
+  library(stringr) # for word function
+  library(rtracklayer)
+  library(scales)
+  library(Rsamtools)
+})
+```
+
+## Differential Analysis
+
+Because some of the data at time point 0 (t0) is missing from the original paper, for the sake of consistency, we use t1 as our starting point, and t12 as the ending.
+
+### Import peaks
+
+```{r}
+# Show the narrowPeak files
+peaks <- list.files("../data/peaks")
+length(peaks)
+
+# import peaks
+peaks <- lapply(file.path("../data/peaks", peaks), rtracklayer::import, format="narrowPeak")
+
+# create consensus peaks
+merged_peaks <- reduce(unlist(GRangesList(peaks)), with.revmap=TRUE)
+length(merged_peaks)
+```
+
+### Getting counts per peak
+
+```{r, eval=FALSE}
+# import bam files
+bams <- list.files("../data/aligned", pattern="bam$", full = TRUE)
+
+# index bam files
+for (bam in bams) {
+  indexBam(bam)
+}
+
+# create summarized experiment object
+se <- chromVAR::getCounts(alignment_files = bams, peaks = merged_peaks, paired = FALSE, format = "bam")
+saveRDS(se, "../data/se/all_se.rds")
+se
+```
+
+```{r}
+# read SE object
+se <- readRDS("../data/se/all_se.rds")
+se
+
+# change colnames
+colnames(se) <- gsub("\\.bam", "", colnames(se))
+
+# add category metadata
+se$category <- word(colnames(se), 1, sep = "_")
+se$category <- as.factor(se$category)
+levels(se$category)
+
+# add time metadata
+se$time <- word(colnames(se), 2, sep = "_")
+se$time <- as.factor(se$time)
+se$time <- relevel(se$time, "t1")
+levels(se$time)
+
+# combine category and time into group metadata
+se$group <- paste(se$category, se$time, sep = "_")
+se$group <- as.factor(se$group)
+levels(se$group)
+
+# add replicate id metadata
+se$rep_id <- word(colnames(se), 3, sep = "_")
+se$rep_id <- as.factor(se$rep_id)
+levels(se$rep_id)
+
+# set regions as rownames
+rownames(se) <- as.character(granges(se))
+```
+
+### edgeR pipeline
+
+```{r}
+# prepare DGE object
+y <- DGEList(counts=assays(se)$counts)
+
+# calculate normalization
+y <- calcNormFactors(y)
+
+# specify model matrix based on group
+mm <- model.matrix(~0+group, data = as.data.frame(colData(se)))
+
+# estimate NB dispersion and visualize
+y <- estimateDisp(y, mm, robust = TRUE)
+plotBCV(y)
+```
+
+edgeR uses the negative binomial distribution to model the read counts. The dispersion parameter of the NB distribution accounts for variability between biological replicates. Except NB dispersion, we also would like to estimate quasi-likelihood (QL) dispersions.
+
+```{r}
+# estimate QL dispersions
+fit <- glmQLFit(y, mm, robust = TRUE)
+head(fit$coefficients)
+```
+
+
+We would like to compare the differentially expressed peaks / accessible regions between two time points (t12 and t1), thus we need to make contrasts between different groups.
+
+```{r}
+# make contrast based on our needs
+contrasts <- makeContrasts(
+  time_DNase = groupDNase_t12 - groupDNase_t1,
+  time_GR = groupGR_t12 - groupGR_t1,
+  time_JUN = groupJUN_t12 - groupJUN_t1,
+  time_JUNB = groupJUNB_t12 - groupJUNB_t1,
+  levels = colnames(mm)
+)
+rownames(contrasts) <- gsub("group", "", rownames(contrasts))
+contrasts
+```
+
+We use QL F-tests to find differential expression peaks within DNase-seq, GR ChIP-seq, JUN ChIP-seq and JUNB ChIP-seq.
+
+```{r}
+# QL F-tests
+res_DNase <- glmQLFTest(fit, contrast = contrasts[, "time_DNase"])
+res_GR <- glmQLFTest(fit, contrast = contrasts[, "time_GR"])
+res_JUN <- glmQLFTest(fit, contrast = contrasts[, "time_JUN"])
+res_JUNB <- glmQLFTest(fit, contrast = contrasts[, "time_JUNB"])
+#topTags(res_DNase)
+```
+
+## Temporal Changes in TF Bindings and Chromatin Accessibility
+
+### Barplot showing differential expression between time point 12 and 1
+
+The Figure 1C from the original paper showed the proportion and the total number of differential sites across all ChIP-seq peak sets. Here we only discuss our selected data, i.e. DNase-seq, ChIP-seq with GR, JUN and JUNB.
+
+```{r}
+# check differential expression sites
+de_DNase <- decideTests(res_DNase, p.value = 0.1)
+de_GR <- decideTests(res_GR, p.value = 0.1)
+de_JUN <- decideTests(res_JUN, p.value = 0.1)
+de_JUNB <- decideTests(res_JUNB, p.value = 0.1)
+#summary(de_DNase)
+```
+
+Here we set p value threshold as 0.1.
+
+```{r}
+# extract significantly increased and decreased expression sites from summary table
+
+DNase_down <- summary(de_DNase)[1]
+DNase_up <- summary(de_DNase)[3]
+GR_down <- summary(de_GR)[1]
+GR_up <- summary(de_GR)[3]
+JUN_down <- summary(de_JUN)[1]
+JUN_up <- summary(de_JUN)[3]
+JUNB_down <- summary(de_JUNB)[1]
+JUNB_up <- summary(de_JUNB)[3]
+```
+
+```{r}
+# create data frame to make barplot
+data <- data.frame(
+  Group = factor(c("DNase", "DNase", "GR", "GR", "JUN", "JUN", "JUNB", "JUNB"), levels = c("GR", "JUN", "JUNB", "DNase")),
+  Category = c("Down", "Up", "Down", "Up", "Down", "Up", "Down", "Up"),
+  Values = c(DNase_down, DNase_up, GR_down, GR_up, JUN_down, JUN_up, JUNB_down, JUNB_up)
+)
+
+# stacked bar plot
+plot <- ggplot(data, aes(x = Group, y = Values, fill = Category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Numbers of differential expression sites across all ChIP-seq peak sets") +
+  theme_minimal()
+plot
+```
+
+The results are not necessarily the same as original paper, for we use different time point (t1 instead of t0) and different peak sets (we only focus on the peak sets from ChIP-seq GR, JUN and JUNB). Surprisingly, we see that the expression of most sites is actually decreasing instead of increasing, if we compare the differential expression between time point 12 and time point 1. After checking the original paper, we think that it's because the TF activity of GR is actually activated at the very beginning of synthetic GC dexamethasone exposure, i.e. between the time point 0 and time point 1. To demonstrate this statement, we are going to test the differential expression between time point 12 and time point 0 within GR ChIP-seq data, using our defined peak sets.
+
+### Validation within GR ChIP-seq data
+
+```{r, eval=FALSE}
+# index GR t0 bams
+indexBam("../data/aligned_GR_t0/GR_t0_rep2.bam")
+indexBam("../data/aligned_GR_t0/GR_t0_rep3.bam")
+
+# define bam list
+bams_GR <- c("../data/aligned_GR_t0/GR_t0_rep2.bam",
+             "../data/aligned_GR_t0/GR_t0_rep3.bam",
+             "../data/aligned/GR_t12_rep1.bam",
+             "../data/aligned/GR_t12_rep2.bam",
+             "../data/aligned/GR_t12_rep3.bam")
+
+# create summarized experiment object
+se_GR <- chromVAR::getCounts(alignment_files = bams_GR, peaks = merged_peaks, paired = FALSE, format = "bam")
+saveRDS(se_GR, "../data/se/GR_se.rds")
+se_GR
+```
+
+```{r}
+# read SE object
+se_GR <- readRDS("../data/se/GR_se.rds")
+se_GR
+
+# change colnames
+colnames(se_GR) <- gsub("\\.bam", "", colnames(se_GR))
+
+# add time metadata
+se_GR$time <- word(colnames(se_GR), 2, sep = "_")
+se_GR$time <- as.factor(se_GR$time)
+se_GR$time <- relevel(se_GR$time, "t0")
+levels(se_GR$time)
+
+# add replicate id metadata
+se_GR$rep_id <- word(colnames(se_GR), 3, sep = "_")
+se_GR$rep_id <- as.factor(se_GR$rep_id)
+levels(se_GR$rep_id)
+
+# set regions as rownames
+rownames(se_GR) <- as.character(granges(se_GR))
+```
+
+```{r}
+# prepare DGE object
+y <- DGEList(counts=assays(se_GR)$counts)
+
+# calculate normalization
+y <- calcNormFactors(y)
+
+# specify model matrix based on group
+mm <- model.matrix(~0+time, data = as.data.frame(colData(se_GR)))
+
+# estimate NB dispersion
+y <- estimateDisp(y, mm, robust = TRUE)
+
+# estimate QL dispersions
+fit <- glmQLFit(y, mm, robust = TRUE)
+
+# define contrast
+time <- makeContrasts(timet12 - timet0, levels = colnames(mm))
+rownames(time) <- gsub("time", "", rownames(time))
+
+# QL F-tests
+res <- glmQLFTest(fit, contrast = time)
+
+# check differential expression sites
+is.de <- decideTests(res, p.value = 0.1)
+summary(is.de)
+```
+
+If we compare the time point 12 and time point 0, we can see that the expression is increasing at most of the sites. This result demonstrates that the TF activity of GR is actually activated at the very beginning of synthetic GC dexamethasone exposure, i.e. between the time point 0 and time point 1.
