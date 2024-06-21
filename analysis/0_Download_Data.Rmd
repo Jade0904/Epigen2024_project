@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, eval=FALSE}
 # create sub-folders if haven't yet
 dir.create("../data/aligned")
 dir.create("../data/peaks")
@@ -90,7 +90,7 @@ download.file("https://www.encodeproject.org/files/ENCFF007EJF/@@download/ENCFF0
 download.file("https://www.encodeproject.org/files/ENCFF544MWX/@@download/ENCFF544MWX.bam", dest = "../data/aligned/DNase_t12_rep5.bam", mode="wb")
 ```
 
-```{r}
+```{r, eval=FALSE}
 # download bam files from GR ChIP-seq at time point 0
 options(timeout=3600)
 download.file("https://www.encodeproject.org/files/ENCFF181HLP/@@download/ENCFF181HLP.bam", dest = "../data/aligned_GR_t0/GR_t0_rep2.bam", mode="wb")

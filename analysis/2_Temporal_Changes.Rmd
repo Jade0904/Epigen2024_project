@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r}
@@ -29,6 +30,7 @@ suppressPackageStartupMessages({
 })
 ```
 
+
 ## Differential Analysis
 
 Because some of the data at time point 0 (t0) is missing from the original paper, for the sake of consistency, we use t1 as our starting point, and t12 as the ending.
@@ -37,11 +39,11 @@ Because some of the data at time point 0 (t0) is missing from the original paper
 
 ```{r}
 # Show the narrowPeak files
-peaks <- list.files("../data/peaks")
+peaks <- list.files("data/peaks")
 length(peaks)
 
 # import peaks
-peaks <- lapply(file.path("../data/peaks", peaks), rtracklayer::import, format="narrowPeak")
+peaks <- lapply(file.path("data/peaks", peaks), rtracklayer::import, format="narrowPeak")
 
 # create consensus peaks
 merged_peaks <- reduce(unlist(GRangesList(peaks)), with.revmap=TRUE)
@@ -52,7 +54,7 @@ length(merged_peaks)
 
 ```{r, eval=FALSE}
 # import bam files
-bams <- list.files("../data/aligned", pattern="bam$", full = TRUE)
+bams <- list.files("data/aligned", pattern="bam$", full = TRUE)
 
 # index bam files
 for (bam in bams) {
@@ -61,13 +63,13 @@ for (bam in bams) {
 
 # create summarized experiment object
 se <- chromVAR::getCounts(alignment_files = bams, peaks = merged_peaks, paired = FALSE, format = "bam")
-saveRDS(se, "../data/se/all_se.rds")
+saveRDS(se, "data/se/all_se.rds")
 se
 ```
 
 ```{r}
 # read SE object
-se <- readRDS("../data/se/all_se.rds")
+se <- readRDS("data/se/all_se.rds")
 se
 
 # change colnames
@@ -202,25 +204,25 @@ The results are not necessarily the same as original paper, for we use different
 
 ```{r, eval=FALSE}
 # index GR t0 bams
-indexBam("../data/aligned_GR_t0/GR_t0_rep2.bam")
-indexBam("../data/aligned_GR_t0/GR_t0_rep3.bam")
+indexBam("data/aligned_GR_t0/GR_t0_rep2.bam")
+indexBam("data/aligned_GR_t0/GR_t0_rep3.bam")
 
 # define bam list
-bams_GR <- c("../data/aligned_GR_t0/GR_t0_rep2.bam",
-             "../data/aligned_GR_t0/GR_t0_rep3.bam",
-             "../data/aligned/GR_t12_rep1.bam",
-             "../data/aligned/GR_t12_rep2.bam",
-             "../data/aligned/GR_t12_rep3.bam")
+bams_GR <- c("data/aligned_GR_t0/GR_t0_rep2.bam",
+             "data/aligned_GR_t0/GR_t0_rep3.bam",
+             "data/aligned/GR_t12_rep1.bam",
+             "data/aligned/GR_t12_rep2.bam",
+             "data/aligned/GR_t12_rep3.bam")
 
 # create summarized experiment object
 se_GR <- chromVAR::getCounts(alignment_files = bams_GR, peaks = merged_peaks, paired = FALSE, format = "bam")
-saveRDS(se_GR, "../data/se/GR_se.rds")
+saveRDS(se_GR, "data/se/GR_se.rds")
 se_GR
 ```
 
 ```{r}
 # read SE object
-se_GR <- readRDS("../data/se/GR_se.rds")
+se_GR <- readRDS("data/se/GR_se.rds")
 se_GR
 
 # change colnames
