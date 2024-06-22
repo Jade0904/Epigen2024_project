@@ -1,0 +1,153 @@
+---
+title: "3_Pairwise_Comparisons"
+author: "Zhihan Zhu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+# import useful packages
+suppressPackageStartupMessages({
+  library(epiwraps)
+  library(motifmatchr)
+  library(MotifDb)
+  library(universalmotif)
+  library(sechm)
+  library(BiocParallel)
+  library(ggplot2)
+  library(chromVAR) # for motif accessibility estimation
+  library(SummarizedExperiment) # data structure
+  library(edgeR)
+  library(stringr) # for word function
+  library(rtracklayer)
+  library(scales)
+  library(Rsamtools)
+})
+```
+
+## Pairwise Comparison Between Different Peak Sets
+
+Ad previously explained, we used the data from time point 12 and time point 1 for our analysis, because some of the data from time point 0 was not provided (or lost) from the supplementary table of the original paper. And in the last analysis, we confirmed that most of the peaks are instead increased if we compare GR ChIP-seq between time point 12 and time point 0. However, if we look at the data from time point 12 and 1, which is we decided to use, we could find that actually most of the peaks are decreased. Thus, we can infer that most of the increasing events happen in the very beginning of the treatment, which is between time point 0 and 1.
+
+In the previous analysis, we saved the dynamic and non-dynamic peaks after we did differential analysis. Our next task is to do the pairwise comparison between different assays, distinguishing the dynamic and non-dynamic regions, similar to the Figure 1F in the original paper.
+
+```{r}
+# import regions from previous results
+
+# not significant regions
+NotSig_DNase <- readRDS("data/de_regions/NotSig_DNase.rds")
+NotSig_GR <- readRDS("data/de_regions/NotSig_GR.rds")
+NotSig_JUN <- readRDS("data/de_regions/NotSig_JUN.rds")
+NotSig_JUNB <- readRDS("data/de_regions/NotSig_JUNB.rds")
+
+# significantly increased regions
+Up_DNase <- readRDS("data/de_regions/Up_DNase.rds")
+Up_GR <- readRDS("data/de_regions/Up_GR.rds")
+Up_JUN <- readRDS("data/de_regions/Up_JUN.rds")
+Up_JUNB <- readRDS("data/de_regions/Up_JUNB.rds")
+
+# significantly decreased regions
+Down_DNase <- readRDS("data/de_regions/Down_DNase.rds")
+Down_GR <- readRDS("data/de_regions/Down_GR.rds")
+Down_JUN <- readRDS("data/de_regions/Down_JUN.rds")
+Down_JUNB <- readRDS("data/de_regions/Down_JUNB.rds")
+```
+
+```{r}
+# combine increased and decreased regions into one as dynamic regions
+Sig_DNase <- union(Up_DNase, Down_DNase)
+Sig_GR <- union(Up_GR, Down_GR)
+Sig_JUN <- union(Up_JUN, Down_JUN)
+Sig_JUNB <- union(Up_JUNB, Down_JUNB)
+```
+
+```{r}
+# calculate Jaccard Index for dynamic peaks
+jac_DNase_GR <- sum(width(intersect(Sig_DNase, Sig_GR))) / sum(width(union(Sig_DNase, Sig_GR)))
+jac_DNase_JUN <- sum(width(intersect(Sig_DNase, Sig_JUN))) / sum(width(union(Sig_DNase, Sig_JUN)))
+jac_DNase_JUNB <- sum(width(intersect(Sig_DNase, Sig_JUNB))) / sum(width(union(Sig_DNase, Sig_JUNB)))
+jac_GR_JUN <- sum(width(intersect(Sig_GR, Sig_JUN))) / sum(width(union(Sig_GR, Sig_JUN)))
+jac_GR_JUNB <- sum(width(intersect(Sig_GR, Sig_JUNB))) / sum(width(union(Sig_GR, Sig_JUNB)))
+jac_JUN_JUNB <- sum(width(intersect(Sig_JUN, Sig_JUNB))) / sum(width(union(Sig_JUN, Sig_JUNB)))
+
+jac_dynamic <- matrix(nrow = 4, ncol = 4, dimnames = list(c("DNase", "GR", "JUN", "JUNB"), c("DNase", "GR", "JUN", "JUNB")))
+
+jac_dynamic["DNase", "DNase"] <- 1
+jac_dynamic["GR", "GR"] <- 1
+jac_dynamic["JUN", "JUN"] <- 1
+jac_dynamic["JUNB", "JUNB"] <- 1
+jac_dynamic["DNase", "GR"] <- jac_DNase_GR
+jac_dynamic["GR", "DNase"] <- jac_DNase_GR
+jac_dynamic["DNase", "JUN"] <- jac_DNase_JUN
+jac_dynamic["JUN", "DNase"] <- jac_DNase_JUN
+jac_dynamic["DNase", "JUNB"] <- jac_DNase_JUNB
+jac_dynamic["JUNB", "DNase"] <- jac_DNase_JUNB
+jac_dynamic["GR", "JUN"] <- jac_GR_JUN
+jac_dynamic["JUN", "GR"] <- jac_GR_JUN
+jac_dynamic["GR", "JUNB"] <- jac_GR_JUNB
+jac_dynamic["JUNB", "GR"] <- jac_GR_JUNB
+jac_dynamic["JUN", "JUNB"] <- jac_JUN_JUNB
+jac_dynamic["JUNB", "JUN"] <- jac_JUN_JUNB
+```
+
+```{r}
+# calculate Jaccard Index for non-dynamic peaks
+jac_DNase_GR <- sum(width(intersect(NotSig_DNase, NotSig_GR))) / sum(width(union(NotSig_DNase, NotSig_GR)))
+jac_DNase_JUN <- sum(width(intersect(NotSig_DNase, NotSig_JUN))) / sum(width(union(NotSig_DNase, NotSig_JUN)))
+jac_DNase_JUNB <- sum(width(intersect(NotSig_DNase, NotSig_JUNB))) / sum(width(union(NotSig_DNase, NotSig_JUNB)))
+jac_GR_JUN <- sum(width(intersect(NotSig_GR, NotSig_JUN))) / sum(width(union(NotSig_GR, NotSig_JUN)))
+jac_GR_JUNB <- sum(width(intersect(NotSig_GR, NotSig_JUNB))) / sum(width(union(NotSig_GR, NotSig_JUNB)))
+jac_JUN_JUNB <- sum(width(intersect(NotSig_JUN, NotSig_JUNB))) / sum(width(union(NotSig_JUN, NotSig_JUNB)))
+
+jac_nondynamic <- matrix(nrow = 4, ncol = 4, dimnames = list(c("DNase", "GR", "JUN", "JUNB"), c("DNase", "GR", "JUN", "JUNB")))
+
+jac_nondynamic["DNase", "DNase"] <- 1
+jac_nondynamic["GR", "GR"] <- 1
+jac_nondynamic["JUN", "JUN"] <- 1
+jac_nondynamic["JUNB", "JUNB"] <- 1
+jac_nondynamic["DNase", "GR"] <- jac_DNase_GR
+jac_nondynamic["GR", "DNase"] <- jac_DNase_GR
+jac_nondynamic["DNase", "JUN"] <- jac_DNase_JUN
+jac_nondynamic["JUN", "DNase"] <- jac_DNase_JUN
+jac_nondynamic["DNase", "JUNB"] <- jac_DNase_JUNB
+jac_nondynamic["JUNB", "DNase"] <- jac_DNase_JUNB
+jac_nondynamic["GR", "JUN"] <- jac_GR_JUN
+jac_nondynamic["JUN", "GR"] <- jac_GR_JUN
+jac_nondynamic["GR", "JUNB"] <- jac_GR_JUNB
+jac_nondynamic["JUNB", "GR"] <- jac_GR_JUNB
+jac_nondynamic["JUN", "JUNB"] <- jac_JUN_JUNB
+jac_nondynamic["JUNB", "JUN"] <- jac_JUN_JUNB
+```
+
+```{r}
+# heatmap for dynamic peaks
+jac_dynamic_df <- as.data.frame(as.table(jac_dynamic))
+names(jac_dynamic_df) <- c("Var1", "Var2", "Value")
+ggplot(jac_dynamic_df, aes(x = Var1, y = Var2, fill = Value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "darkblue", high = "lightblue", name = "Jaccard Index") +
+  labs(title = "Jaccard Index for Dynamic Peaks", x = "", y = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 0, hjust = 1))
+```
+
+```{r}
+# heatmap for non-dynamic peaks
+jac_nondynamic_df <- as.data.frame(as.table(jac_nondynamic))
+names(jac_nondynamic_df) <- c("Var1", "Var2", "Value")
+ggplot(jac_nondynamic_df, aes(x = Var1, y = Var2, fill = Value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "darkblue", high = "lightblue", name = "Jaccard Index") +
+  labs(title = "Jaccard Index for Non-dynamic Peaks", x = "", y = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 0, hjust = 1))
+```
+
+Here we can see from the scales of the color that, in non-dynamic peaks, the jaccard indices are much higher than in dynamic peaks, which is opposite from the original paper. Again, as previously analysed, this might be because all the dynamics happen at the very beginning of the treatment (between time point 0 and time point 1). Which means, although it should be true that differential TF binding sites preferentially colocate, the differential expression events cannot be detected between time point 1 and 12, and these colocated TF binding sites are actually aggregated in non-significant regions. We can verify this statement after we do further temporal binding dynamics analysis in the next chapters.

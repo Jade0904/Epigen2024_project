@@ -27,6 +27,7 @@ suppressPackageStartupMessages({
   library(rtracklayer)
   library(scales)
   library(Rsamtools)
+  library(magrittr)
 })
 ```
 
@@ -152,6 +153,164 @@ res_JUNB <- glmQLFTest(fit, contrast = contrasts[, "time_JUNB"])
 #topTags(res_DNase)
 ```
 
+```{r, eval=FALSE}
+# save regions for later use
+
+# use 0.1 as significant threshold to increase sensitivity
+sig.p <- 0.1
+# minimum absolute logFC
+lfc <- 0
+
+
+### DNase
+tab_DNase <- as.data.frame(topTags(res_DNase, n = Inf)$table)
+
+# not significant
+NotSig_DNase <- rownames(tab_DNase[tab_DNase$FDR > sig.p, ]) %>% strsplit("[:-]")
+NotSig_DNase <- data.frame(
+  chr = sapply(NotSig_DNase, `[`, 1),
+  start = as.integer(sapply(NotSig_DNase, `[`, 2)),
+  end = as.integer(sapply(NotSig_DNase, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(NotSig_DNase, "data/de_regions/NotSig_DNase.rds")
+
+# significantly increased
+Up_DNase <- rownames(tab_DNase[tab_DNase$FDR < sig.p & tab_DNase$logFC > lfc, ]) %>% strsplit("[:-]")
+Up_DNase <- data.frame(
+  chr = sapply(Up_DNase, `[`, 1),
+  start = as.integer(sapply(Up_DNase, `[`, 2)),
+  end = as.integer(sapply(Up_DNase, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Up_DNase, "data/de_regions/Up_DNase.rds")
+
+# significantly decreased
+Down_DNase <- rownames(tab_DNase[tab_DNase$FDR < sig.p & tab_DNase$logFC < -lfc, ]) %>% strsplit("[:-]")
+Down_DNase <- data.frame(
+  chr = sapply(Down_DNase, `[`, 1),
+  start = as.integer(sapply(Down_DNase, `[`, 2)),
+  end = as.integer(sapply(Down_DNase, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Down_DNase, "data/de_regions/Down_DNase.rds")
+
+
+### GR
+tab_GR <- as.data.frame(topTags(res_GR, n = Inf)$table)
+
+# not significant
+NotSig_GR <- rownames(tab_GR[tab_GR$FDR > sig.p, ]) %>% strsplit("[:-]")
+NotSig_GR <- data.frame(
+  chr = sapply(NotSig_GR, `[`, 1),
+  start = as.integer(sapply(NotSig_GR, `[`, 2)),
+  end = as.integer(sapply(NotSig_GR, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(NotSig_GR, "data/de_regions/NotSig_GR.rds")
+
+# significantly increased
+Up_GR <- rownames(tab_GR[tab_GR$FDR < sig.p & tab_GR$logFC > lfc, ]) %>% strsplit("[:-]")
+Up_GR <- data.frame(
+  chr = sapply(Up_GR, `[`, 1),
+  start = as.integer(sapply(Up_GR, `[`, 2)),
+  end = as.integer(sapply(Up_GR, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Up_GR, "data/de_regions/Up_GR.rds")
+
+# significantly decreased
+Down_GR <- rownames(tab_GR[tab_GR$FDR < sig.p & tab_GR$logFC < -lfc, ]) %>% strsplit("[:-]")
+Down_GR <- data.frame(
+  chr = sapply(Down_GR, `[`, 1),
+  start = as.integer(sapply(Down_GR, `[`, 2)),
+  end = as.integer(sapply(Down_GR, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Down_GR, "data/de_regions/Down_GR.rds")
+
+
+### JUN
+tab_JUN <- as.data.frame(topTags(res_JUN, n = Inf)$table)
+
+# not significant
+NotSig_JUN <- rownames(tab_JUN[tab_JUN$FDR > sig.p, ]) %>% strsplit("[:-]")
+NotSig_JUN <- data.frame(
+  chr = sapply(NotSig_JUN, `[`, 1),
+  start = as.integer(sapply(NotSig_JUN, `[`, 2)),
+  end = as.integer(sapply(NotSig_JUN, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(NotSig_JUN, "data/de_regions/NotSig_JUN.rds")
+
+# significantly increased
+Up_JUN <- rownames(tab_JUN[tab_JUN$FDR < sig.p & tab_JUN$logFC > lfc, ]) %>% strsplit("[:-]")
+Up_JUN <- data.frame(
+  chr = sapply(Up_JUN, `[`, 1),
+  start = as.integer(sapply(Up_JUN, `[`, 2)),
+  end = as.integer(sapply(Up_JUN, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Up_JUN, "data/de_regions/Up_JUN.rds")
+
+# significantly decreased
+Down_JUN <- rownames(tab_JUN[tab_JUN$FDR < sig.p & tab_JUN$logFC < -lfc, ]) %>% strsplit("[:-]")
+Down_JUN <- data.frame(
+  chr = sapply(Down_JUN, `[`, 1),
+  start = as.integer(sapply(Down_JUN, `[`, 2)),
+  end = as.integer(sapply(Down_JUN, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Down_JUN, "data/de_regions/Down_JUN.rds")
+
+
+### JUNB
+tab_JUNB <- as.data.frame(topTags(res_JUNB, n = Inf)$table)
+
+# not significant
+NotSig_JUNB <- rownames(tab_JUNB[tab_JUNB$FDR > sig.p, ]) %>% strsplit("[:-]")
+NotSig_JUNB <- data.frame(
+  chr = sapply(NotSig_JUNB, `[`, 1),
+  start = as.integer(sapply(NotSig_JUNB, `[`, 2)),
+  end = as.integer(sapply(NotSig_JUNB, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(NotSig_JUNB, "data/de_regions/NotSig_JUNB.rds")
+
+# significantly increased
+Up_JUNB <- rownames(tab_JUNB[tab_JUNB$FDR < sig.p & tab_JUNB$logFC > lfc, ]) %>% strsplit("[:-]")
+Up_JUNB <- data.frame(
+  chr = sapply(Up_JUNB, `[`, 1),
+  start = as.integer(sapply(Up_JUNB, `[`, 2)),
+  end = as.integer(sapply(Up_JUNB, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Up_JUNB, "data/de_regions/Up_JUNB.rds")
+
+# significantly decreased
+Down_JUNB <- rownames(tab_JUNB[tab_JUNB$FDR < sig.p & tab_JUNB$logFC < -lfc, ]) %>% strsplit("[:-]")
+Down_JUNB <- data.frame(
+  chr = sapply(Down_JUNB, `[`, 1),
+  start = as.integer(sapply(Down_JUNB, `[`, 2)),
+  end = as.integer(sapply(Down_JUNB, `[`, 3)),
+  score = 0,
+  stringsAsFactors = FALSE
+) %>% makeGRangesFromDataFrame()
+saveRDS(Down_JUNB, "data/de_regions/Down_JUNB.rds")
+```
+
+
 ## Temporal Changes in TF Bindings and Chromatin Accessibility
 
 ### Barplot showing differential expression between time point 12 and 1
@@ -166,6 +325,15 @@ de_JUN <- decideTests(res_JUN, p.value = 0.1)
 de_JUNB <- decideTests(res_JUNB, p.value = 0.1)
 #summary(de_DNase)
 ```
+
+```{r}
+# plot test results
+plotMD(res_DNase, status=de_DNase)
+plotMD(res_GR, status = de_GR)
+plotMD(res_JUN, status = de_JUN)
+plotMD(res_JUNB, status = de_JUNB)
+```
+
 
 Here we set p value threshold as 0.1.
 
