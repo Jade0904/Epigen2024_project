@@ -7,50 +7,52 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r, eval=FALSE}
 # create sub-folders if haven't yet
-dir.create("../data/aligned")
-dir.create("../data/peaks")
-dir.create("../data/aligned_GR_t0")
-dir.create("../data/se")
+dir.create("data/aligned")
+dir.create("data/peaks")
+dir.create("data/aligned_GR_t0")
+dir.create("data/se")
+dir.create("data/de_regions")
 ```
 
 ```{r, eval=FALSE}
 # download ChIP-seq and DNase-seq narrowpeak files
 
 # GR ChIP-seq
-download.file("https://www.encodeproject.org/files/ENCFF044MLR/@@download/ENCFF044MLR.bed.gz", dest = "../data/peaks/GR_t1_rep1.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF835HHK/@@download/ENCFF835HHK.bed.gz", dest = "../data/peaks/GR_t1_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF597LEE/@@download/ENCFF597LEE.bed.gz", dest = "../data/peaks/GR_t1_rep3.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF011CUR/@@download/ENCFF011CUR.bed.gz", dest = "../data/peaks/GR_t12_rep1.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF983QTI/@@download/ENCFF983QTI.bed.gz", dest = "../data/peaks/GR_t12_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF984JYU/@@download/ENCFF984JYU.bed.gz", dest = "../data/peaks/GR_t12_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF044MLR/@@download/ENCFF044MLR.bed.gz", dest = "data/peaks/GR_t1_rep1.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF835HHK/@@download/ENCFF835HHK.bed.gz", dest = "data/peaks/GR_t1_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF597LEE/@@download/ENCFF597LEE.bed.gz", dest = "data/peaks/GR_t1_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF011CUR/@@download/ENCFF011CUR.bed.gz", dest = "data/peaks/GR_t12_rep1.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF983QTI/@@download/ENCFF983QTI.bed.gz", dest = "data/peaks/GR_t12_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF984JYU/@@download/ENCFF984JYU.bed.gz", dest = "data/peaks/GR_t12_rep3.bed.gz")
 
 # JUN ChIP-seq
-download.file("https://www.encodeproject.org/files/ENCFF524BFG/@@download/ENCFF524BFG.bed.gz", dest = "../data/peaks/JUN_t1_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF105QBY/@@download/ENCFF105QBY.bed.gz", dest = "../data/peaks/JUN_t1_rep3.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF187MSF/@@download/ENCFF187MSF.bed.gz", dest = "../data/peaks/JUN_t12_rep1.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF106DDY/@@download/ENCFF106DDY.bed.gz", dest = "../data/peaks/JUN_t12_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF219YOR/@@download/ENCFF219YOR.bed.gz", dest = "../data/peaks/JUN_t12_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF524BFG/@@download/ENCFF524BFG.bed.gz", dest = "data/peaks/JUN_t1_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF105QBY/@@download/ENCFF105QBY.bed.gz", dest = "data/peaks/JUN_t1_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF187MSF/@@download/ENCFF187MSF.bed.gz", dest = "data/peaks/JUN_t12_rep1.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF106DDY/@@download/ENCFF106DDY.bed.gz", dest = "data/peaks/JUN_t12_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF219YOR/@@download/ENCFF219YOR.bed.gz", dest = "data/peaks/JUN_t12_rep3.bed.gz")
 
 # JUNB ChIP-seq
-download.file("https://www.encodeproject.org/files/ENCFF692MOZ/@@download/ENCFF692MOZ.bed.gz", dest = "../data/peaks/JUNB_t1_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF031VMK/@@download/ENCFF031VMK.bed.gz", dest = "../data/peaks/JUNB_t1_rep3.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF512QLI/@@download/ENCFF512QLI.bed.gz", dest = "../data/peaks/JUNB_t12_rep1.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF381ZAP/@@download/ENCFF381ZAP.bed.gz", dest = "../data/peaks/JUNB_t12_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF692MOZ/@@download/ENCFF692MOZ.bed.gz", dest = "data/peaks/JUNB_t1_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF031VMK/@@download/ENCFF031VMK.bed.gz", dest = "data/peaks/JUNB_t1_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF512QLI/@@download/ENCFF512QLI.bed.gz", dest = "data/peaks/JUNB_t12_rep1.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF381ZAP/@@download/ENCFF381ZAP.bed.gz", dest = "data/peaks/JUNB_t12_rep2.bed.gz")
 
 # DNase-seq
-download.file("https://www.encodeproject.org/files/ENCFF080TWC/@@download/ENCFF080TWC.bed.gz", dest = "../data/peaks/DNase_t1_rep1.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF281NNE/@@download/ENCFF281NNE.bed.gz", dest = "../data/peaks/DNase_t1_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF166GIE/@@download/ENCFF166GIE.bed.gz", dest = "../data/peaks/DNase_t1_rep3.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF415EGI/@@download/ENCFF415EGI.bed.gz", dest = "../data/peaks/DNase_t1_rep4.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF149UHR/@@download/ENCFF149UHR.bed.gz", dest = "../data/peaks/DNase_t1_rep5.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF709RFW/@@download/ENCFF709RFW.bed.gz", dest = "../data/peaks/DNase_t12_rep1.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF201LWV/@@download/ENCFF201LWV.bed.gz", dest = "../data/peaks/DNase_t12_rep2.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF993GPI/@@download/ENCFF993GPI.bed.gz", dest = "../data/peaks/DNase_t12_rep3.bed.gz")
-download.file("https://www.encodeproject.org/files/ENCFF276RWE/@@download/ENCFF276RWE.bed.gz", dest = "../data/peaks/DNase_t12_rep5.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF080TWC/@@download/ENCFF080TWC.bed.gz", dest = "data/peaks/DNase_t1_rep1.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF281NNE/@@download/ENCFF281NNE.bed.gz", dest = "data/peaks/DNase_t1_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF166GIE/@@download/ENCFF166GIE.bed.gz", dest = "data/peaks/DNase_t1_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF415EGI/@@download/ENCFF415EGI.bed.gz", dest = "data/peaks/DNase_t1_rep4.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF149UHR/@@download/ENCFF149UHR.bed.gz", dest = "data/peaks/DNase_t1_rep5.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF709RFW/@@download/ENCFF709RFW.bed.gz", dest = "data/peaks/DNase_t12_rep1.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF201LWV/@@download/ENCFF201LWV.bed.gz", dest = "data/peaks/DNase_t12_rep2.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF993GPI/@@download/ENCFF993GPI.bed.gz", dest = "data/peaks/DNase_t12_rep3.bed.gz")
+download.file("https://www.encodeproject.org/files/ENCFF276RWE/@@download/ENCFF276RWE.bed.gz", dest = "data/peaks/DNase_t12_rep5.bed.gz")
 ```
 
 ```{r, eval=FALSE}
@@ -58,42 +60,42 @@ download.file("https://www.encodeproject.org/files/ENCFF276RWE/@@download/ENCFF2
 options(timeout=3600)
 
 # GR aligned bam file
-download.file("https://www.encodeproject.org/files/ENCFF331QXR/@@download/ENCFF331QXR.bam", dest = "../data/aligned/GR_t1_rep1.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF807YIG/@@download/ENCFF807YIG.bam", dest = "../data/aligned/GR_t1_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF038DBH/@@download/ENCFF038DBH.bam", dest = "../data/aligned/GR_t1_rep3.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF221AJW/@@download/ENCFF221AJW.bam", dest = "../data/aligned/GR_t12_rep1.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF236LTP/@@download/ENCFF236LTP.bam", dest = "../data/aligned/GR_t12_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF888BBP/@@download/ENCFF888BBP.bam", dest = "../data/aligned/GR_t12_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF331QXR/@@download/ENCFF331QXR.bam", dest = "data/aligned/GR_t1_rep1.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF807YIG/@@download/ENCFF807YIG.bam", dest = "data/aligned/GR_t1_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF038DBH/@@download/ENCFF038DBH.bam", dest = "data/aligned/GR_t1_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF221AJW/@@download/ENCFF221AJW.bam", dest = "data/aligned/GR_t12_rep1.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF236LTP/@@download/ENCFF236LTP.bam", dest = "data/aligned/GR_t12_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF888BBP/@@download/ENCFF888BBP.bam", dest = "data/aligned/GR_t12_rep3.bam", mode="wb")
 
 # JUN aligned bam file
-download.file("https://www.encodeproject.org/files/ENCFF476XBN/@@download/ENCFF476XBN.bam", dest = "../data/aligned/JUN_t1_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF761UEZ/@@download/ENCFF761UEZ.bam", dest = "../data/aligned/JUN_t1_rep3.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF010YMM/@@download/ENCFF010YMM.bam", dest = "../data/aligned/JUN_t12_rep1.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF979HWA/@@download/ENCFF979HWA.bam", dest = "../data/aligned/JUN_t12_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF151HUH/@@download/ENCFF151HUH.bam", dest = "../data/aligned/JUN_t12_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF476XBN/@@download/ENCFF476XBN.bam", dest = "data/aligned/JUN_t1_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF761UEZ/@@download/ENCFF761UEZ.bam", dest = "data/aligned/JUN_t1_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF010YMM/@@download/ENCFF010YMM.bam", dest = "data/aligned/JUN_t12_rep1.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF979HWA/@@download/ENCFF979HWA.bam", dest = "data/aligned/JUN_t12_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF151HUH/@@download/ENCFF151HUH.bam", dest = "data/aligned/JUN_t12_rep3.bam", mode="wb")
 
 # JUNB aligned bam file
-download.file("https://www.encodeproject.org/files/ENCFF720VQA/@@download/ENCFF720VQA.bam", dest = "../data/aligned/JUNB_t1_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF528TQB/@@download/ENCFF528TQB.bam", dest = "../data/aligned/JUNB_t1_rep3.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF807GKK/@@download/ENCFF807GKK.bam", dest = "../data/aligned/JUNB_t12_rep1.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF625YHJ/@@download/ENCFF625YHJ.bam", dest = "../data/aligned/JUNB_t12_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF720VQA/@@download/ENCFF720VQA.bam", dest = "data/aligned/JUNB_t1_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF528TQB/@@download/ENCFF528TQB.bam", dest = "data/aligned/JUNB_t1_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF807GKK/@@download/ENCFF807GKK.bam", dest = "data/aligned/JUNB_t12_rep1.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF625YHJ/@@download/ENCFF625YHJ.bam", dest = "data/aligned/JUNB_t12_rep2.bam", mode="wb")
 
 # DNase-seq aligned bam file
-download.file("https://www.encodeproject.org/files/ENCFF621RJW/@@download/ENCFF621RJW.bam", dest = "../data/aligned/DNase_t1_rep1.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF788VEY/@@download/ENCFF788VEY.bam", dest = "../data/aligned/DNase_t1_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF976XNB/@@download/ENCFF976XNB.bam", dest = "../data/aligned/DNase_t1_rep3.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF806VMF/@@download/ENCFF806VMF.bam", dest = "../data/aligned/DNase_t1_rep4.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF078DVJ/@@download/ENCFF078DVJ.bam", dest = "../data/aligned/DNase_t1_rep5.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF716ZOM/@@download/ENCFF716ZOM.bam", dest = "../data/aligned/DNase_t12_rep1.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF891IEK/@@download/ENCFF891IEK.bam", dest = "../data/aligned/DNase_t12_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF007EJF/@@download/ENCFF007EJF.bam", dest = "../data/aligned/DNase_t12_rep3.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF544MWX/@@download/ENCFF544MWX.bam", dest = "../data/aligned/DNase_t12_rep5.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF621RJW/@@download/ENCFF621RJW.bam", dest = "data/aligned/DNase_t1_rep1.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF788VEY/@@download/ENCFF788VEY.bam", dest = "data/aligned/DNase_t1_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF976XNB/@@download/ENCFF976XNB.bam", dest = "data/aligned/DNase_t1_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF806VMF/@@download/ENCFF806VMF.bam", dest = "data/aligned/DNase_t1_rep4.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF078DVJ/@@download/ENCFF078DVJ.bam", dest = "data/aligned/DNase_t1_rep5.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF716ZOM/@@download/ENCFF716ZOM.bam", dest = "data/aligned/DNase_t12_rep1.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF891IEK/@@download/ENCFF891IEK.bam", dest = "data/aligned/DNase_t12_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF007EJF/@@download/ENCFF007EJF.bam", dest = "data/aligned/DNase_t12_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF544MWX/@@download/ENCFF544MWX.bam", dest = "data/aligned/DNase_t12_rep5.bam", mode="wb")
 ```
 
 ```{r, eval=FALSE}
 # download bam files from GR ChIP-seq at time point 0
 options(timeout=3600)
-download.file("https://www.encodeproject.org/files/ENCFF181HLP/@@download/ENCFF181HLP.bam", dest = "../data/aligned_GR_t0/GR_t0_rep2.bam", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF870WJP/@@download/ENCFF870WJP.bam", dest = "../data/aligned_GR_t0/GR_t0_rep3.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF181HLP/@@download/ENCFF181HLP.bam", dest = "data/aligned_GR_t0/GR_t0_rep2.bam", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF870WJP/@@download/ENCFF870WJP.bam", dest = "data/aligned_GR_t0/GR_t0_rep3.bam", mode="wb")
 ```
 
