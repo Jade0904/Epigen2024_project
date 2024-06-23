@@ -156,6 +156,22 @@ res_JUNB <- glmQLFTest(fit, contrast = contrasts[, "time_JUNB"])
 ```{r, eval=FALSE}
 # save regions for later use
 
+# define peaks for each assay
+DNase_peaks <- list.files("data/peaks", pattern = "^DNase_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+DNase_peaks <- reduce(unlist(GRangesList(DNase_peaks)), with.revmap=TRUE)
+
+GR_peaks <- list.files("data/peaks", pattern = "^GR_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+GR_peaks <- reduce(unlist(GRangesList(GR_peaks)), with.revmap=TRUE)
+
+JUN_peaks <- list.files("data/peaks", pattern = "^JUN_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+JUN_peaks <- reduce(unlist(GRangesList(JUN_peaks)), with.revmap=TRUE)
+
+JUNB_peaks <- list.files("data/peaks", pattern = "^JUNB_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+JUNB_peaks <- reduce(unlist(GRangesList(JUNB_peaks)), with.revmap=TRUE)
+
+# we intersect the following results from differential analysis with the set of peaks from each assay
+
+
 # use 0.1 as significant threshold to increase sensitivity
 sig.p <- 0.1
 # minimum absolute logFC
@@ -174,6 +190,7 @@ NotSig_DNase <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+NotSig_DNase <- intersect(NotSig_DNase, DNase_peaks)
 saveRDS(NotSig_DNase, "data/de_regions/NotSig_DNase.rds")
 
 # significantly increased
@@ -185,6 +202,7 @@ Up_DNase <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Up_DNase <- intersect(Up_DNase, DNase_peaks)
 saveRDS(Up_DNase, "data/de_regions/Up_DNase.rds")
 
 # significantly decreased
@@ -196,6 +214,7 @@ Down_DNase <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Down_DNase <- intersect(Down_DNase, DNase_peaks)
 saveRDS(Down_DNase, "data/de_regions/Down_DNase.rds")
 
 
@@ -211,6 +230,7 @@ NotSig_GR <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+NotSig_GR <- intersect(NotSig_GR, GR_peaks)
 saveRDS(NotSig_GR, "data/de_regions/NotSig_GR.rds")
 
 # significantly increased
@@ -222,6 +242,7 @@ Up_GR <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Up_GR <- intersect(Up_GR, GR_peaks)
 saveRDS(Up_GR, "data/de_regions/Up_GR.rds")
 
 # significantly decreased
@@ -233,6 +254,7 @@ Down_GR <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Down_GR <- intersect(Down_GR, GR_peaks)
 saveRDS(Down_GR, "data/de_regions/Down_GR.rds")
 
 
@@ -248,6 +270,7 @@ NotSig_JUN <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+NotSig_JUN <- intersect(NotSig_JUN, JUN_peaks)
 saveRDS(NotSig_JUN, "data/de_regions/NotSig_JUN.rds")
 
 # significantly increased
@@ -259,6 +282,7 @@ Up_JUN <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Up_JUN <- intersect(Up_JUN, JUN_peaks)
 saveRDS(Up_JUN, "data/de_regions/Up_JUN.rds")
 
 # significantly decreased
@@ -270,6 +294,7 @@ Down_JUN <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Down_JUN <- intersect(Down_JUN, JUN_peaks)
 saveRDS(Down_JUN, "data/de_regions/Down_JUN.rds")
 
 
@@ -285,6 +310,7 @@ NotSig_JUNB <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+NotSig_JUNB <- intersect(NotSig_JUNB, JUNB_peaks)
 saveRDS(NotSig_JUNB, "data/de_regions/NotSig_JUNB.rds")
 
 # significantly increased
@@ -296,6 +322,7 @@ Up_JUNB <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Up_JUNB <- intersect(Up_JUNB, JUNB_peaks)
 saveRDS(Up_JUNB, "data/de_regions/Up_JUNB.rds")
 
 # significantly decreased
@@ -307,6 +334,7 @@ Down_JUNB <- data.frame(
   score = 0,
   stringsAsFactors = FALSE
 ) %>% makeGRangesFromDataFrame()
+Down_JUNB <- intersect(Down_JUNB, JUNB_peaks)
 saveRDS(Down_JUNB, "data/de_regions/Down_JUNB.rds")
 ```
 
@@ -383,6 +411,7 @@ bams_GR <- c("data/aligned_GR_t0/GR_t0_rep2.bam",
              "data/aligned/GR_t12_rep3.bam")
 
 # create summarized experiment object
+# we still use consensus peaks here because the peaks for GR are missing from the original paper supplementary materials, and we decide not to run peak calling process for simplicity
 se_GR <- chromVAR::getCounts(alignment_files = bams_GR, peaks = merged_peaks, paired = FALSE, format = "bam")
 saveRDS(se_GR, "data/se/GR_se.rds")
 se_GR
