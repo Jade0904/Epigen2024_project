@@ -1,0 +1,66 @@
+---
+title: "4_Temporal_Binding_Dynamics"
+author: "Zhihan Zhu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+# import useful packages
+suppressPackageStartupMessages({
+  library(AnnotationHub)
+  library(epiwraps)
+  library(GenomicRanges)
+  library(rtracklayer)
+  library(Rsubread)
+  library(R.utils)
+})
+```
+
+## Temporal Binding Dynamics
+
+In the pairwise comparisons analysis, we found that most of the colocated binding sites are found in non-dynamic peaks. We inferred that, this is because most of the TF dynamics happen between time point 0 and 1, and thus these differential binding sites can not be significantly detected if we do the differential analysis between time point 1 and 12, and actually aggregated in non-significant group. In this chapter, we are going to compare the peaks at different time points to verify this statement.
+
+```{r}
+# import peaks, only use replicate 2 for consistency and simplicity
+
+# GR
+GR_t1 <- rtracklayer::import("data/peaks/GR_t1_rep2.bed.gz", format = "narrowPeak")
+GR_t12 <- rtracklayer::import("data/peaks/GR_t12_rep2.bed.gz", format = "narrowPeak")
+
+# JUN
+JUN_t1 <- rtracklayer::import("data/peaks/JUN_t1_rep2.bed.gz", format = "narrowPeak")
+JUN_t12 <- rtracklayer::import("data/peaks/JUN_t12_rep2.bed.gz", format = "narrowPeak")
+
+# JUNB
+JUNB_t1 <- rtracklayer::import("data/peaks/JUNB_t1_rep2.bed.gz", format = "narrowPeak")
+JUNB_t12 <- rtracklayer::import("data/peaks/JUNB_t12_rep2.bed.gz", format = "narrowPeak")
+```
+
+```{r}
+# use Upset plot to see the intersection
+
+# GR
+GR_peaks <- list(GR_t1, GR_t12)
+names(GR_peaks) <- c("GR_t1", "GR_t12")
+regionUpset(GR_peaks)
+
+# JUN
+JUN_peaks <- list(JUN_t1, JUN_t12)
+names(JUN_peaks) <- c("JUN_t1", "JUN_t12")
+regionUpset(JUN_peaks)
+
+# JUNB
+JUNB_peaks <- list(JUNB_t1, JUNB_t12)
+names(JUNB_peaks) <- c("JUNB_t1", "JUNB_t12")
+regionUpset(JUNB_peaks)
+```
+
+It is true that most of the GR binding sites present at later time point (i.e. time point 12) were also present at early time point (i.e. time point 1). However, this is not true though, for JUN and JUNB. It is obvious that, for JUN and JUNB, the binding sites present at later time point are much more than that at early time point, and opposite to GR, nearly all of the JUN and JUNB binding sites present at early time point were also present at later time point.
+
+So it's only true that GR dynamics happen between time point 0 and 1, but not the case for JUN and JUNB.
