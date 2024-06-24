@@ -1,6 +1,6 @@
 ---
 title: "1_Exploratory_Analysis"
-author: "Zhihan Zhu"
+author: "Paula Iller"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -19,13 +19,68 @@ suppressPackageStartupMessages({
     library(memes)
     library(data.table)
     library(universalmotif)
+    library(GenomicRanges)
+    library(AnnotationHub)
+    library(ensembldb)
+    library(InteractionSet)
+    library(epiwraps)
+    library(universalmotif)
+     library(ggplot2)
 })
 ```
 
 ```{r}
-# get motif of JUN
+
+# Define the file paths with corresponding variable names
+file_paths <- c(
+  "GR_t1_rep2.bed.gz",
+  "GR_t12_rep2.bed.gz",
+  "JUN_t1_rep2.bed.gz",
+  "JUN_t12_rep2.bed.gz",
+  "JUNB_t1_rep2.bed.gz",
+  "JUNB_t12_rep2.bed.gz",
+  "DNase_t1_rep2.bed.gz",
+  "DNase_t12_rep2.bed.gz"
+)
+
+base_path <- "/Users/paulailler/Documents/ETH/Master/Bioinformatics/Epigen2024_project/data/peaks/"
+variable_names <- c(
+  "peaks_GR_1",
+  "peaks_GR_t12",
+  "peaks_JUN_t1",
+  "peaks_JUN_t12",
+  "peaks_JUNB_t1",
+  "peaks_JUNB_t12",
+  "peaks_DNase_t1",
+  "peaks_DNase_t12"
+)
+
+# Initialize an empty list to store the imported data
+peaks_list <- list()
+
+# Loop through the file paths and import the data
+for (i in seq_along(file_paths)) {
+  file_path <- file.path(base_path, file_paths[i])
+  peaks_data <- rtracklayer::import(file_path, format = "NarrowPeak")
+  seqlevelsStyle(peaks_data) <- "Ensembl"  # Change chromosome names to Ensembl style
+  peaks_list[[variable_names[i]]] <- peaks_data
+}
+
+peaks_GR_1 <- peaks_list[["peaks_GR_1"]]
+peaks_chr1 <- peaks_GR_1[seqnames(peaks_GR_1) == "1"]
+print(head(peaks_chr1))
+
+# Load genome sequence from AnnotationHub
+ah <- AnnotationHub()
+ensdb <- ah[[""]]
+annotatedPeaks <- epiwraps::annotateRegions(peaks, genome)
+head(annotatedPeaks)
+
+# Get motif of JUN
 JUNmotifs <- query(MotifDb, "JUN", "Hsapiens")
 JUNmotif <- JUNmotifs[["Hsapiens-HOCOMOCOv10-JUN_HUMAN.H10MO.A"]]
 view_motifs(JUNmotif)
-```
 
+
+
+````
