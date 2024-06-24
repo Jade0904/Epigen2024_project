@@ -42,23 +42,33 @@ JUNB_t1 <- rtracklayer::import("data/peaks/JUNB_t1_rep2.bed.gz", format = "narro
 JUNB_t12 <- rtracklayer::import("data/peaks/JUNB_t12_rep2.bed.gz", format = "narrowPeak")
 ```
 
+### use Upset plot to see the intersection
+
 ```{r}
-# use Upset plot to see the intersection
-
 # GR
-GR_peaks <- list(GR_t1, GR_t12)
-names(GR_peaks) <- c("GR_t1", "GR_t12")
-regionUpset(GR_peaks)
+suppressWarnings({
+  GR_peaks <- list(GR_t1, GR_t12)
+  names(GR_peaks) <- c("GR_t1", "GR_t12")
+  regionUpset(GR_peaks)
+})
+```
 
+```{r}
 # JUN
-JUN_peaks <- list(JUN_t1, JUN_t12)
-names(JUN_peaks) <- c("JUN_t1", "JUN_t12")
-regionUpset(JUN_peaks)
+suppressWarnings({
+  JUN_peaks <- list(JUN_t1, JUN_t12)
+  names(JUN_peaks) <- c("JUN_t1", "JUN_t12")
+  regionUpset(JUN_peaks)
+})
+```
 
+```{r}
 # JUNB
-JUNB_peaks <- list(JUNB_t1, JUNB_t12)
-names(JUNB_peaks) <- c("JUNB_t1", "JUNB_t12")
-regionUpset(JUNB_peaks)
+suppressWarnings({
+  JUNB_peaks <- list(JUNB_t1, JUNB_t12)
+  names(JUNB_peaks) <- c("JUNB_t1", "JUNB_t12")
+  regionUpset(JUNB_peaks)
+})
 ```
 
 It is true that most of the GR binding sites present at later time point (i.e. time point 12) were also present at early time point (i.e. time point 1). However, this is not true though, for JUN and JUNB. It is obvious that, for JUN and JUNB, the binding sites present at later time point are much more than that at early time point, and opposite to GR, nearly all of the JUN and JUNB binding sites present at early time point were also present at later time point.
