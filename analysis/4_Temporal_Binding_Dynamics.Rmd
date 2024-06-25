@@ -74,3 +74,25 @@ suppressWarnings({
 It is true that most of the GR binding sites present at later time point (i.e. time point 12) were also present at early time point (i.e. time point 1). However, this is not true though, for JUN and JUNB. It is obvious that, for JUN and JUNB, the binding sites present at later time point are much more than that at early time point, and opposite to GR, nearly all of the JUN and JUNB binding sites present at early time point were also present at later time point.
 
 So it's only true that GR dynamics happen between time point 0 and 1, but not the case for JUN and JUNB.
+
+## Co-occurrence analysis
+
+```{r}
+# t1
+suppressWarnings({
+  t1_peaks <- list(GR_t1, JUN_t1, JUNB_t1)
+  names(t1_peaks) <- c("GR_t1", "JUN_t1", "JUNB_t1")
+  regionUpset(t1_peaks, set_size.show = TRUE)
+})
+```
+
+```{r}
+# t12
+suppressWarnings({
+  t12_peaks <- list(GR_t12, JUN_t12, JUNB_t12)
+  names(t12_peaks) <- c("GR_t12", "JUN_t12", "JUNB_t12")
+  regionUpset(t12_peaks, set_size.show = TRUE)
+})
+```
+
+At the beginning of the treatment (time point 1), the co-occurrence of GR, JUN and JUNB happens quite often (4272 out of 8874 GR peaks). At late stage of the treatment (time point 12), the absolute number of co-occurrence peaks is decreasing, however it becomes the most part of GR peaks (3787 out of 3930 peaks). The co-occurrence of JUN and JUNB happens a lot at time point 12.
