@@ -96,3 +96,40 @@ suppressWarnings({
 ```
 
 At the beginning of the treatment (time point 1), the co-occurrence of GR, JUN and JUNB happens quite often (4272 out of 8874 GR peaks). At late stage of the treatment (time point 12), the absolute number of co-occurrence peaks is decreasing, however it becomes the most part of GR peaks (3787 out of 3930 peaks). The co-occurrence of JUN and JUNB happens a lot at time point 12.
+
+We are interested in, to what extent JUN/JUNB colocalize within the GR sites.
+
+```{r}
+# t1
+JUN_GR_t1 <- intersect(JUN_t1, GR_t1)
+JUNB_GR_t1 <- intersect(JUNB_t1, GR_t1)
+
+print("At time point 1:")
+
+JUN_t1_prop <- round(sum(overlapsAny(JUN_GR_t1, JUNB_GR_t1))/length(JUN_GR_t1), digits = 4) * 100
+print(paste0("Of the JUN sites within GR sites, ", as.character(JUN_t1_prop), "% overlap JUNB sites within GR sites."))
+
+JUNB_t1_prop <- round(sum(overlapsAny(JUNB_GR_t1, JUN_GR_t1))/length(JUNB_GR_t1), digits = 4) * 100
+print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t1_prop), "% overlap JUN sites within GR sites."))
+```
+
+```{r}
+# t12
+JUN_GR_t12 <- intersect(JUN_t12, GR_t12)
+JUNB_GR_t12 <- intersect(JUNB_t12, GR_t12)
+
+print("At time point 12:")
+
+suppressWarnings({
+  JUN_t12_prop <- round(sum(overlapsAny(JUN_GR_t12, JUNB_GR_t12))/length(JUN_GR_t12), digits = 4) * 100
+})
+print(paste0("Of the JUN sites within GR sites, ", as.character(JUN_t12_prop), "% overlap JUNB sites within GR sites."))
+
+suppressWarnings({
+  JUNB_t12_prop <- round(sum(overlapsAny(JUNB_GR_t12, JUN_GR_t12))/length(JUNB_GR_t12), digits = 4) * 100
+})
+print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t12_prop), "% overlap JUN sites within GR sites."))
+```
+
+
+
