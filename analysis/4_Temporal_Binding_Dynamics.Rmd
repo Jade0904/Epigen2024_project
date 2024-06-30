@@ -40,6 +40,10 @@ JUN_t12 <- rtracklayer::import("data/peaks/JUN_t12_rep2.bed.gz", format = "narro
 # JUNB
 JUNB_t1 <- rtracklayer::import("data/peaks/JUNB_t1_rep2.bed.gz", format = "narrowPeak")
 JUNB_t12 <- rtracklayer::import("data/peaks/JUNB_t12_rep2.bed.gz", format = "narrowPeak")
+
+# DNase
+DNase_t1 <- rtracklayer::import("data/peaks/DNase_t1_rep2.bed.gz", format = "narrowPeak")
+DNase_t12 <- rtracklayer::import("data/peaks/DNase_t12_rep2.bed.gz", format = "narrowPeak")
 ```
 
 ### use Upset plot to see the intersection
@@ -131,5 +135,64 @@ suppressWarnings({
 print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t12_prop), "% overlap JUN sites within GR sites."))
 ```
 
+### differential accessibility between different groups of GR sites
 
+Here we would like to separate GR sites into two groups: the ones that gain JUN/JUNB sites, and the ones do not. And we are interested in the GR sites that gain JUN/JUNB show more change in accessibility than that don't.
+
+```{r}
+# import GR peak sets at t1
+GR_t1_peaks <- c("GR_t1_rep1.bed.gz", "GR_t1_rep2.bed.gz", "GR_t1_rep3.bed.gz")
+GR_t1_peaks <- lapply(file.path("data/peaks", GR_t1_peaks), rtracklayer::import, format="narrowPeak")
+GR_t1_peaks <- reduce(unlist(GRangesList(GR_t1_peaks)), with.revmap=TRUE)
+# length(GR_t1_peaks) 11740
+
+# import JUN/JUNB peak sets at t1
+JUN_JUNB_t1_peaks <- c("JUN_t1_rep2.bed.gz", "JUN_t1_rep3.bed.gz", "JUNB_t1_rep2.bed.gz", "JUNB_t1_rep3.bed.gz")
+JUN_JUNB_t1_peaks <- lapply(file.path("data/peaks", JUN_JUNB_t1_peaks), rtracklayer::import, format="narrowPeak")
+JUN_JUNB_t1_peaks <- reduce(unlist(GRangesList(JUN_JUNB_t1_peaks)), with.revmap=TRUE)
+# length(JUN_JUNB_t1_peaks) 35808
+
+# subset GR peaks that do not have JUN/JUNB at t1
+GR_t1_peaks <- subsetByOverlaps(GR_t1_peaks, JUN_JUNB_t1_peaks, invert = FALSE)
+# length(GR_t1_peaks) 9495
+
+# import GR peak sets at t12
+GR_t12_peaks <- c("GR_t12_rep1.bed.gz", "GR_t12_rep2.bed.gz", "GR_t12_rep3.bed.gz")
+GR_t12_peaks <- lapply(file.path("data/peaks", GR_t12_peaks), rtracklayer::import, format="narrowPeak")
+GR_t12_peaks <- reduce(unlist(GRangesList(GR_t12_peaks)), with.revmap=TRUE)
+# length(GR_t12_peaks) 5591
+
+# import JUN/JUNB peak sets at t12
+JUN_JUNB_t12_peaks <- c("JUN_t12_rep1.bed.gz", "JUN_t12_rep2.bed.gz", "JUN_t12_rep3.bed.gz", "JUNB_t12_rep1.bed.gz", "JUNB_t12_rep2.bed.gz")
+JUN_JUNB_t12_peaks <- lapply(file.path("data/peaks", JUN_JUNB_t12_peaks), rtracklayer::import, format="narrowPeak")
+JUN_JUNB_t12_peaks <- reduce(unlist(GRangesList(JUN_JUNB_t12_peaks)), with.revmap=TRUE)
+# length(JUN_JUNB_t12_peaks) 67785
+
+# subset GR peaks that have JUN/JUNB at t12
+GR_t12_peaks_group1 <- subsetByOverlaps(GR_t12_peaks, JUN_JUNB_t12_peaks)
+# length(GR_t12_peaks_group1) 5521
+# subset GR peaks that do not have JUN/JUNB at t12
+GR_t12_peaks_group2 <- subsetByOverlaps(GR_t12_peaks, JUN_JUNB_t12_peaks, invert = TRUE)
+# length(GR_t12_peaks_group2) 70
+
+# GR sites that gain JUN/JUNB at t12 (group 1)
+GR_group1 <- subsetByOverlaps(GR_t1_peaks, GR_t12_peaks_group1)
+# length(GR_group1) 4761
+# GR sites that do not gain JUN/JUNB at t12 (group 2)
+GR_group2 <- subsetByOverlaps(GR_t1_peaks, GR_t12_peaks_group2)
+# length(GR_group2) 19
+
+# import DNase peaks at t12
+DNase_t12_peaks <- c("DNase_t12_rep1.bed.gz", "DNase_t12_rep2.bed.gz", "DNase_t12_rep3.bed.gz", "DNase_t12_rep5.bed.gz")
+DNase_t12_peaks <- lapply(file.path("data/peaks", DNase_t12_peaks), rtracklayer::import, format="narrowPeak")
+DNase_t12_peaks <- reduce(unlist(GRangesList(DNase_t12_peaks)), with.revmap=TRUE)
+
+# subset GR sites that have accessibility at t12
+GR_group1 <- subsetByOverlaps(GR_group1, DNase_t12_peaks)
+# length(GR_group1) 4412
+GR_group2 <- subsetByOverlaps(GR_group2, DNase_t12_peaks)
+# length(GR_group2) 7
+```
+
+Basically, if we focus on two groups of GR sites, (1) the ones that do not have JUN/JUNB sites at t1 but gain JUN/JUNB at t12; (2) the ones that do not have JUN/JUNB sites at t1 and do not gain JUN/JUNB at t12, we can see that
 
