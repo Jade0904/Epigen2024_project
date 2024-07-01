@@ -19,6 +19,7 @@ suppressPackageStartupMessages({
   library(rtracklayer)
   library(Rsubread)
   library(R.utils)
+  library(ggplot2)
 })
 ```
 
@@ -182,17 +183,52 @@ GR_group1 <- subsetByOverlaps(GR_t1_peaks, GR_t12_peaks_group1)
 GR_group2 <- subsetByOverlaps(GR_t1_peaks, GR_t12_peaks_group2)
 # length(GR_group2) 19
 
+# import DNase peaks at t1
+DNase_t1_peaks <- c("DNase_t1_rep1.bed.gz", "DNase_t1_rep2.bed.gz", "DNase_t1_rep3.bed.gz", "DNase_t1_rep4.bed.gz", "DNase_t1_rep5.bed.gz")
+DNase_t1_peaks <- lapply(file.path("data/peaks", DNase_t1_peaks), rtracklayer::import, format="narrowPeak")
+DNase_t1_peaks <- reduce(unlist(GRangesList(DNase_t1_peaks)), with.revmap=TRUE)
+
 # import DNase peaks at t12
 DNase_t12_peaks <- c("DNase_t12_rep1.bed.gz", "DNase_t12_rep2.bed.gz", "DNase_t12_rep3.bed.gz", "DNase_t12_rep5.bed.gz")
 DNase_t12_peaks <- lapply(file.path("data/peaks", DNase_t12_peaks), rtracklayer::import, format="narrowPeak")
 DNase_t12_peaks <- reduce(unlist(GRangesList(DNase_t12_peaks)), with.revmap=TRUE)
 
+# subset GR sites that have accessibility at t1
+GR_group1_t1 <- subsetByOverlaps(GR_group1, DNase_t1_peaks)
+# length(GR_group1_t1) 4379
+GR_group2_t1 <- subsetByOverlaps(GR_group2, DNase_t1_peaks)
+# length(GR_group2_t1) 8
+
 # subset GR sites that have accessibility at t12
-GR_group1 <- subsetByOverlaps(GR_group1, DNase_t12_peaks)
-# length(GR_group1) 4412
-GR_group2 <- subsetByOverlaps(GR_group2, DNase_t12_peaks)
-# length(GR_group2) 7
+GR_group1_t12 <- subsetByOverlaps(GR_group1, DNase_t12_peaks)
+# length(GR_group1_t12) 4412
+GR_group2_t12 <- subsetByOverlaps(GR_group2, DNase_t12_peaks)
+# length(GR_group2_t12) 7
 ```
 
-Basically, if we focus on two groups of GR sites, (1) the ones that do not have JUN/JUNB sites at t1 but gain JUN/JUNB at t12; (2) the ones that do not have JUN/JUNB sites at t1 and do not gain JUN/JUNB at t12, we can see that
+Basically, if we focus on two groups of GR sites, (1) the ones that do not have JUN/JUNB sites at t1 but gain JUN/JUNB at t12; (2) the ones that do not have JUN/JUNB sites at t1 and do not gain JUN/JUNB at t12, we can see that group 1 has more accessibility at both t1 and t12 than group 2. However, it seems like between t1 and t12, the accessibility of both groups do not change much.
+
+However, the number of group 2 is too small to make a conclusion. Most of the GR sites have JUN/JUNB sites at t12 (5521 out of 5591), and only 70 sites do not have JUN/JUNB sites at t12.
+
+```{r}
+# create data frame to make barplot
+data <- data.frame(
+  Group = factor(c("Group 1", "Group 1", "Group 2", "Group 2"), levels = c("Group 1", "Group 2")),
+  Time = factor(c("Time 1", "Time 12", "Time 1", "Time 12"), levels = c("Time 1", "Time 12")),
+  Values = c(length(GR_group1_t1), length(GR_group1_t12), length(GR_group2_t1), length(GR_group2_t12))
+)
+
+# stacked bar plot
+plot <- ggplot(data, aes(x = Group, y = log(Values), fill = Time)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Numbers of accessible sites for different GR sites at different time points") +
+  theme_minimal()
+plot
+```
+
+Here is a stacked bar plot showing the number of accessible sites for different GR sites at different time points, with the groups stating above. The y axis is in log scale for better visualization.
+
+```{r}
+# simple statistical analysis?
+```
 
