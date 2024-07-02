@@ -229,6 +229,36 @@ plot
 Here is a stacked bar plot showing the number of accessible sites for different GR sites at different time points, with the groups stating above. The y axis is in log scale for better visualization.
 
 ```{r}
-# simple statistical analysis?
+# simple statistical analysis, McNemar test, group 1
+
+# number of sites that are both accessible at t1 and t12
+a = sum(overlapsAny(GR_group1_t1, GR_group1_t12)) #4272
+# number of sites that are accessible at t1 but not at t12
+b = length(GR_group1_t1) - a #107
+# number of sites that are not accessible at t1 but accessible at t12
+c = length(GR_group1_t12) - a #140
+# number of sites that are not accessible at both t1 and t12
+d = length(GR_group1) - a - b - c #242
+
+contingency_table = matrix(c(a, b, c, d), nrow = 2, byrow = TRUE)
+mcnemar.test(contingency_table)
 ```
 
+```{r}
+# simple statistical analysis, McNemar test, group 2
+
+# number of sites that are both accessible at t1 and t12
+a = sum(overlapsAny(GR_group2_t1, GR_group2_t12)) #6
+# number of sites that are accessible at t1 but not at t12
+b = length(GR_group2_t1) - a #2
+# number of sites that are not accessible at t1 but accessible at t12
+c = length(GR_group2_t12) - a #1
+# number of sites that are not accessible at both t1 and t12
+d = length(GR_group2) - a - b - c #10
+
+contingency_table = matrix(c(a, b, c, d), nrow = 2, byrow = TRUE)
+mcnemar.test(contingency_table)
+
+```
+
+Actually the sample size for group 2 is too small that we can hardly get any statistical results from it. For group 1 we can see somewhat significant results, but I think it's not strong enough to make a conclusion.
