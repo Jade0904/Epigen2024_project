@@ -9,8 +9,23 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Introduction
+
+GC is a glucocorticoid receptor (GR), a transcription factor that binds to specific genomic sites to influence gene expression. Traditional views have focused on DNA accessibility as the primary determinant of GR binding. However, recent research highlights the importance of other genomic features, including the co-occupancy of transcription factors (TFs), histone modifications, and the overall chromatin landscape.
+
+Our project aims to investigate the binding dynamics of the GR, JUN, and JUNB transcription factors in the A549 human epithelial lung cell line following treatment with a GR-activating drug. By leveraging high-quality ChIP-seq and DNase-seq datasets from Ian C. McDowell et al., we will analyze TF occupancy and chromatin accessibility over a 12-hour period of GC exposure. We focused on how GR interacts with JUN and JUNB, and how these interactions influence genomic binding sites and subsequent gene expression changes.
+
+We will conduct a series of analyses to achieve the following objectives:
+1. Examine the binding dynamics of GR, JUN, and JUNB.
+2. Identify factors that dictate GR binding specificity in the presence of JUN and JUNB.
+3. Correlate TF binding changes with alterations in gene expression and chromatin state.
+
+Our methods will include peak calling and annotation; temporal and statistical analyses of TF binding and chromatin accessibility; co-occurrence analyses; and correlation studies using heatmaps and clustering. We will also perform longitudinal analyses of GR binding dynamics, overlap quantification of early and late GR binding sites, and differential accessibility profiling.
+
+
 ```{r}
 # import useful packages
+# Load necessary packages
 suppressPackageStartupMessages({
     library(motifmatchr)
     library(Biostrings)
@@ -24,15 +39,37 @@ suppressPackageStartupMessages({
     library(ensembldb)
     library(InteractionSet)
     library(epiwraps)
-    library(universalmotif)
     library(ggplot2)
-    library(PWMEnrich) # for R-based motif enrichment analysis
-
+    library(PWMEnrich)
+    library(rtracklayer)
+    library(ChIPseeker)
+    library(org.Hs.eg.db)
+    library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+    library(ChIPpeakAnno)
+    library(VennDiagram)
+    library(DiffBind)
+    library(motifTestR)
+    library(extraChIPs)
+    library(rtracklayer)
+    library(BSgenome.Hsapiens.UCSC.hg19)
+    library(parallel)
+    library(ggplot2)
+    library(patchwork)
+    library(motifmatchr)
+    library(Biostrings) # for handling sequences
+    library(MotifDb) 
+    library(BSgenome.Mmusculus.UCSC.mm10)
+    library(memes)
+    library(data.table)
+    library(universalmotif)
 })
+
 ```
 
 ```{r}
+# Importing data 
 
+base_path <- "/Users/paulailler/Documents/ETH/Master/Bioinformatics/Epigen2024_project/data/peaks/"
 # Define the file paths with corresponding variable names
 file_paths <- c(
   "GR_t1_rep2.bed.gz",
@@ -45,9 +82,8 @@ file_paths <- c(
   "DNase_t12_rep2.bed.gz"
 )
 
-base_path <- "/Users/paulailler/Documents/ETH/Master/Bioinformatics/Epigen2024_project/data/peaks/"
 variable_names <- c(
-  "peaks_GR_1",
+  "peaks_GR_t1",
   "peaks_GR_t12",
   "peaks_JUN_t1",
   "peaks_JUN_t12",
@@ -57,198 +93,85 @@ variable_names <- c(
   "peaks_DNase_t12"
 )
 
-# Initialize an empty list to store the imported data
-peaks_list <- list()
 
-# Loop through the file paths and import the data
-for (i in seq_along(file_paths)) {
-  file_path <- file.path(base_path, file_paths[i])
-  peaks_data <- rtracklayer::import(file_path, format = "NarrowPeak")
-  seqlevelsStyle(peaks_data) <- "Ensembl"  # Change chromosome names to Ensembl style
-  peaks_list[[variable_names[i]]] <- peaks_data
+# Import each file individually and store in the list
+for (i in 1:length(file_paths)) {
+  peaks <- rtracklayer::import(file.path(base_path, file_paths[i]), format = "NarrowPeak")
+  seqlevelsStyle(peaks) <- "UCSC" 
+  peaks_list[[variable_names[i]]] <- peaks
 }
 
+# creation of data frame for t1 and t12 conditions
+peak_lengths_df_t1 <- do.call(rbind, list(
+  data.frame(Condition = "GR_t1", Length = width(peaks_list[["peaks_GR_t1"]])),
+  data.frame(Condition = "JUN_t1", Length = width(peaks_list[["peaks_JUN_t1"]])),
+  data.frame(Condition = "JUNB_t1", Length = width(peaks_list[["peaks_JUNB_t1"]])),
+  data.frame(Condition = "DNase_t1", Length = width(peaks_list[["peaks_DNase_t1"]]))
+))
 
-peaks_GR_1 <- peaks_list[["peaks_GR_1"]]
-peaks_GR_1_chr1 <- peaks_GR_1[seqnames(peaks_GR_1) == "1"]
-#print(head(peaks_GR_1_chr1))
-peaks_GR_1_chr1_df <- as.data.frame(peaks_GR_1_chr1)
+peak_lengths_df_t12 <- do.call(rbind, list(
+  data.frame(Condition = "GR_t12", Length = width(peaks_list[["peaks_GR_t12"]])),
+  data.frame(Condition = "JUN_t12", Length = width(peaks_list[["peaks_JUN_t12"]])),
+  data.frame(Condition = "JUNB_t12", Length = width(peaks_list[["peaks_JUNB_t12"]])),
+  data.frame(Condition = "DNase_t12", Length = width(peaks_list[["peaks_DNase_t12"]]))
+))
 
-ggplot(peaks_GR_1_chr1_df, aes(x = start)) +
-  geom_histogram(binwidth = 1000000, fill = "blue", alpha = 0.7) +
+# Plot histograms of peak lengths for t1
+plot_t1 <- ggplot(peak_lengths_df_t1, aes(x = Length, fill = Condition)) +
+  geom_histogram(binwidth = 50, alpha = 0.6, position = "identity") +
   theme_minimal() +
-  labs(title = "Distribution of GR Peaks on Chromosome 1",
-       x = "Genomic Position",
-       y = "Frequency")
+  labs(title = "Distribution of Peak Lengths (t1)", x = "Peak Length (bp)", y = "Count") +
+  scale_fill_brewer(palette = "Set3") +
+  xlim(0, 2000)
 
-peaks_GR_12 <- peaks_list[["peaks_GR_t12"]]
-peaks_GR_t12_chr1 <- peaks_GR_1[seqnames(peaks_GR_12) == "1"]
-#print(head(peaks_GR_t12_chr1))
-peaks_GR_12_chr1_df <- as.data.frame(peaks_GR_t12_chr1)
-
-ggplot(peaks_GR_12_chr1_df, aes(x = start)) +
-  geom_histogram(binwidth = 1000000, fill = "blue", alpha = 0.7) +
+# Plot histograms of peak lengths for t12
+plot_t12 <- ggplot(peak_lengths_df_t12, aes(x = Length, fill = Condition)) +
+  geom_histogram(binwidth = 50, alpha = 0.6, position = "identity") +
   theme_minimal() +
-  labs(title = "Distribution of GR Peaks on Chromosome 1",
-       x = "Genomic Position",
-       y = "Frequency")
+  labs(title = "Distribution of Peak Lengths (t12)", x = "Peak Length (bp)", y = "Count") +
+  scale_fill_brewer(palette = "Set3") +
+  xlim(0, 2000)
 
-
-peaks_JUN_t1 <- peaks_list[["peaks_JUN_t1"]]
-peaks_JUN_t1_chr1 <- peaks_JUN_t1[seqnames(peaks_GR_12) == "1"]
-#print(head(peaks_JUN_t1_chr1))
-
-peaks_JUN_t12 <- peaks_list[["peaks_JUN_t12"]]
-peaks_JUN_t12_chr1 <- peaks_JUN_t12[seqnames(peaks_JUN_t12) == "1"]
-#print(head(peaks_JUN_t12_chr1))
-
-peaks_JUNB_t1 <- peaks_list[["peaks_JUNB_t1"]]
-peaks_JUNB_t1_chr1 <- peaks_JUNB_t1[seqnames(peaks_JUNB_t1) == "1"]
-#print(head(peaks_JUNB_t1_chr1))
-
-peaks_JUNB_t12 <- peaks_list[["peaks_JUNB_t12"]]
-peaks_JUNB_t12_chr1 <- peaks_JUNB_t12[seqnames(peaks_JUNB_t12) == "1"]
-#print(head(peaks_JUNB_t12_chr1))
-
-peaks_DNase_t1 <- peaks_list[["peaks_DNase_t1"]]
-peaks_DNase_t1_chr1 <- peaks_DNase_t1[seqnames(peaks_DNase_t1) == "1"]
-#print(head(peaks_DNase_t1_chr1))
-
-peaks_DNase_t12 <- peaks_list[["peaks_DNase_t12"]]
-peaks_DNase_t12_ch1 <- peaks_DNase_t12[seqnames(peaks_DNase_t12) == "1"]
-#print(head(peaks_DNase_t12_ch1))
-
-
-# Perform overlap analysis
-overlap_GR_JUN_t1 <- findOverlaps(peaks_list[["peaks_GR_1"]], peaks_list[["peaks_JUN_t1"]])
-overlap_GR_JUN_t12 <- findOverlaps(peaks_list[["peaks_GR_t12"]], peaks_list[["peaks_JUN_t12"]])
-overlap_GR_JUNB_t1 <- findOverlaps(peaks_list[["peaks_GR_1"]], peaks_list[["peaks_JUNB_t1"]])
-overlap_GR_JUNB_t12 <- findOverlaps(peaks_list[["peaks_GR_t12"]], peaks_list[["peaks_JUNB_t12"]])
-
-# Print overlap results
-cat("Overlap GR and JUN t1:", length(overlap_GR_JUN_t1), "\n")
-cat("Overlap GR and JUN t12:", length(overlap_GR_JUN_t12), "\n")
-cat("Overlap GR and JUNB t1:", length(overlap_GR_JUNB_t1), "\n")
-cat("Overlap GR and JUNB t12:", length(overlap_GR_JUNB_t12), "\n")
-
-peak_counts <- lapply(peaks_list, function(peaks) {
-  peak_gr <- GRanges(peaks)
-  count <- countOverlaps(peaks_list[[1]], peak_gr)
-  count
-})
-
-
-# Diagrams for t1
-data_t1 <- list(
-  GR_t1 =  peaks_list[["peaks_GR_1"]],
-  JUN_t1 = peaks_list[["peaks_JUNB_t1"]],
-  JUNB_t1 = peaks_list[["peaks_JUNB_t1"]]
-)
-
-# Diagrams for t12
-data_t12 <- list(
-  GR_t12 = peaks_list[["peaks_GR_t12"]],
-  JUN_t12 = peaks_list[["peaks_JUN_t12"]],
-  JUNB_t12 = peaks_list[["peaks_JUNB_t12"]]
-)
-
-ggvenn(
-  data_t1,
-  fill_color = c("#00AFBB", "#E7B800", "#FC4E07"),
-  stroke_size = 0.5,
-  set_name_size = 4,
-  show_percentage = FALSE
-) +
-  labs(title = "GR, JUN, JUNB at t1")
-
-ggvenn(
-  data_t12,
-  fill_color = c("#00AFBB", "#E7B800", "#FC4E07"),
-  stroke_size = 0.5,
-  set_name_size = 4,
-  show_percentage = FALSE
-) +
-  labs(title = "GR, JUN, JUNB at t12")
-
-peak_counts <- lapply(peaks_list, function(peaks) {
-  length(peaks)
-})
-
-# Bar plot of peak counts
-peak_counts_df <- data.frame(
-  TF = names(peak_counts),
-  Count = unlist(peak_counts)
-)
-
-ggplot(peak_counts_df, aes(x = TF, y = Count)) +
-  geom_bar(stat = "identity") +
-  theme_minimal() +
-  labs(title = "Peak Counts for Each Transcription Factor",
-       x = "Transcription Factor",
-       y = "Peak Count")
-
-
-# AnnotationHub usage human epithelial lung cell line A549
-ah <- AnnotationHub()
-AnnotationHub::query(ah, c("A549", "Homo sapiens")) # searching here object in records
-genome <- ah[["AH22505"]]
-print(genome)
-
-
-annotated_peaks <- lapply(peaks_list, function(peaks) {
-  ChIPseeker::annotatePeak(peaks, TxDb = genome)
-})
-
-
-# Annotate peaks (Example for one dataset)
-annotatedPeaks <- epiwraps::annotateRegions(peaks_list[["peaks_JUN_t1"]], genome)
-head(annotatedPeaks)
+# Load the hg38 reference genome
+genome <- BSgenome.Hsapiens.UCSC.hg38
 
 # Motif analysis for JUN
-JUNmotifs <-MotifDb::query((MotifDb, "JUN", species = "Hsapiens")
+JUNmotifs <- MotifDb::query(MotifDb, c("JUN"), "Hsapiens")
 JUNmotif <- JUNmotifs[["Hsapiens-HOCOMOCOv10-JUN_HUMAN.H10MO.A"]]
-v
+view_motifs(JUNmotif)
+
+JUNmotif2 <- convert_motifs(JUNmotif, class="TFBSTools-PWMatrix")
+moi <- motifmatchr::matchMotifs(JUNmotif2, chr1, out="positions", p.cutoff=1e-5)
+moi <- as(setNames(moi,names(chr19)), "GRanges")
+
+# Match motifs in DNase-seq peaks
+JUN_moi_t1 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t1"]], genome = genome)
+JUN_moi_t12 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
+
+# Motif analysis for JUN
+JUNBmotifs <- MotifDb::query(MotifDb, c("JUNB"), "Hsapiens")
+JUNBmotif <- JUNBmotifs[["Hsapiens-HOCOMOCOv11-core-A-JUNB_HUMAN.H11MO.0.A"]]
+view_motifs(JUNBmotif)
+
+JUNBmotif2 <- convert_motifs(JUNBmotif, class="TFBSTools-PWMatrix")
+
+JUNB_moi_t1 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t1"]], genome = genome)
+JUNB_moi_t1 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
 
 
 
-# Differential binding analysis using DESeq2
-count_matrix <- makeSummarizedExperimentFromFeatures(peaks_list)
-design_matrix <- data.frame(
-  condition = factor(rep(c("t1", "t12"), each = 4)),
-  row.names = colnames(count_matrix)
-)
-
-dds <- DESeqDataSetFromMatrix(countData = assay(count_matrix),
-                              colData = design_matrix,
-                              design = ~ condition)
-
-dds <- DESeq(dds)
-res <- results(dds)
-head(res)
-
-# Visualize differential binding
-res_df <- as.data.frame(res)
-ggplot(res_df, aes(x=log2FoldChange, y=-log10(pvalue))) +
-  geom_point() +
-  theme_minimal() +
-  labs(title="Differential Binding Analysis", x="Log2 Fold Change", y="-Log10 P-value")
-
-# Peak Annotation function
-annotate_peaks <- function(peaks, ensdb) {
-  epiwraps::annotateRegions(peaks, ensdb)
-}
-
-annotated_GR_t1 <- annotate_peaks(peaks_list[["peaks_GR_1"]], genome)
-annotated_GR_t12 <- annotate_peaks(peaks_list[["peaks_GR_t12"]], genome)
-annotated_JUN_t1 <- annotate_peaks(peaks_list[["peaks_JUN_t1"]], genome)
-annotated_JUN_t12 <- annotate_peaks(peaks_list[["peaks_JUN_t12"]], genome)
-annotated_JUNB_t1 <- annotate_peaks(peaks_list[["peaks_JUNB_t1"]], genome)
-annotated_JUNB_t12 <- annotate_peaks(peaks_list[["peaks_JUNB_t12"]], genome)
-
-# Display annotated peaks
-head(annotated_GR_t1)
-head(annotated_GR_t12)
-head(annotated_JUN_t1)
-head(annotated_JUN_t12)
-head(annotated_JUNB_t1)
-head(annotated_JUNB_t12)
+# 
+# annotated_GR_t1 <- epiwraps::annotateRegions(peaks_list[["peaks_GR_1"]], genome)
+# annotated_GR_t12 <- epiwraps::annotateRegions(peaks_list[["peaks_GR_t12"]], genome)
+# annotated_JUN_t1 <- epiwraps::annotateRegions(peaks_list[["peaks_JUN_t1"]], genome)
+# annotated_JUN_t12 <- epiwraps::annotateRegions(peaks_list[["peaks_JUN_t12"]], genome)
+# annotated_JUNB_t1 <- epiwraps::annotateRegions(peaks_list[["peaks_JUNB_t1"]], genome)
+# annotated_JUNB_t12 <- epiwraps::annotateRegions(peaks_list[["peaks_JUNB_t12"]], genome)
+# 
+# # Display annotated peaks
+# head(annotated_GR_t1)
+# head(annotated_GR_t12)
+# head(annotated_JUN_t1)
+# head(annotated_JUN_t12)
+# head(annotated_JUNB_t1)
+# head(annotated_JUNB_t12)
