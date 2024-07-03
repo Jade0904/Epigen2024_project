@@ -1,0 +1,29 @@
+---
+title: "pdf_report"
+author: "Zhihan Zhu"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r}
+#library("rmarkdown")
+#render("analysis/pdf_report.Rmd", pdf_document(), knit_root_dir = "..")
+```
+
+```{r child='analysis/2_Temporal_Changes.Rmd'}
+
+```
+
+```{r child='analysis/3_Pairwise_Comparisons.Rmd'}
+
+```
+
+```{r child='analysis/4_Temporal_Binding_Dynamics.Rmd'}
+
+```
+

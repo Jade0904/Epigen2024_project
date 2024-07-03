@@ -5,10 +5,18 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup2 setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
+
+# Temporal Changes in TF Bindings and Chromatin Accessibility
+
+In this chapter, we will focus on the temporal changes in TF bindings and chromatin accessibility. We will use the data from time point 1 and time point 12 for our analysis, because some of the data from time point 0 was not provided (or lost) from the supplementary table of the original paper, which is actually because of the missing of GR peaks at time point 0.
+
+And in the last analysis, we confirmed that most of the GR peaks are indeed increased if we compare GR ChIP-seq between time point 12 and time point 0. However, if we look at the data from time point 12 and 1, which is we decided to use, we could find that actually most of the GR peaks are decreased. Thus, we can infer that most of the increasing events happen in the very beginning of the treatment, which is between time point 0 and 1.
+
+We also showed the barplot for the numbers of significantly increased or decreased peaks in different group of data, between time point 1 and 12.
 
 ```{r}
 # import useful packages
@@ -34,14 +42,14 @@ suppressPackageStartupMessages({
 
 ## Differential Analysis
 
-Because some of the data at time point 0 (t0) is missing from the original paper, for the sake of consistency, we use t1 as our starting point, and t12 as the ending.
+Because GR narrowPeak data at time point 0 (t0) is missing from the original paper, for the sake of consistency, we use t1 as our starting point, and t12 as the ending.
 
 ### Import peaks
 
 ```{r}
 # Show the narrowPeak files
 peaks <- list.files("data/peaks")
-length(peaks)
+peaks # show the files we use
 
 # import peaks
 peaks <- lapply(file.path("data/peaks", peaks), rtracklayer::import, format="narrowPeak")
@@ -63,15 +71,15 @@ for (bam in bams) {
 }
 
 # create summarized experiment object
-se <- chromVAR::getCounts(alignment_files = bams, peaks = merged_peaks, paired = FALSE, format = "bam")
-saveRDS(se, "data/se/all_se.rds")
-se
+se <- chromVAR::getCounts(alignment_files = bams, peaks = merged_peaks,
+                          paired = FALSE, format = "bam")
+saveRDS(se, "data/se/all_se.rds") # save the data for later use
 ```
 
 ```{r}
 # read SE object
 se <- readRDS("data/se/all_se.rds")
-se
+se # show se object
 
 # change colnames
 colnames(se) <- gsub("\\.bam", "", colnames(se))
@@ -102,6 +110,8 @@ rownames(se) <- as.character(granges(se))
 ```
 
 ### edgeR pipeline
+
+Here we use the famous edgeR package to do the differential analysis. We first prepare the DGEList object, then calculate normalization factors, estimate NB dispersion, and finally estimate QL dispersions.
 
 ```{r}
 # prepare DGE object
@@ -157,19 +167,24 @@ res_JUNB <- glmQLFTest(fit, contrast = contrasts[, "time_JUNB"])
 # save regions for later use
 
 # define peaks for each assay
-DNase_peaks <- list.files("data/peaks", pattern = "^DNase_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+DNase_peaks <- list.files("data/peaks", pattern = "^DNase_", full.names = TRUE) %>% 
+  lapply(rtracklayer::import, format="narrowPeak")
 DNase_peaks <- reduce(unlist(GRangesList(DNase_peaks)), with.revmap=TRUE)
 
-GR_peaks <- list.files("data/peaks", pattern = "^GR_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+GR_peaks <- list.files("data/peaks", pattern = "^GR_", full.names = TRUE) %>% 
+  lapply(rtracklayer::import, format="narrowPeak")
 GR_peaks <- reduce(unlist(GRangesList(GR_peaks)), with.revmap=TRUE)
 
-JUN_peaks <- list.files("data/peaks", pattern = "^JUN_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+JUN_peaks <- list.files("data/peaks", pattern = "^JUN_", full.names = TRUE) %>% 
+  lapply(rtracklayer::import, format="narrowPeak")
 JUN_peaks <- reduce(unlist(GRangesList(JUN_peaks)), with.revmap=TRUE)
 
-JUNB_peaks <- list.files("data/peaks", pattern = "^JUNB_", full.names = TRUE) %>% lapply(rtracklayer::import, format="narrowPeak")
+JUNB_peaks <- list.files("data/peaks", pattern = "^JUNB_", full.names = TRUE) %>% 
+  lapply(rtracklayer::import, format="narrowPeak")
 JUNB_peaks <- reduce(unlist(GRangesList(JUNB_peaks)), with.revmap=TRUE)
 
-# we intersect the following results from differential analysis with the set of peaks from each assay
+### we intersect the following results from differential analysis
+### with the set of peaks from each assay
 
 
 # use 0.1 as significant threshold to increase sensitivity
@@ -363,7 +378,7 @@ plotMD(res_JUNB, status = de_JUNB)
 ```
 
 
-Here we set p value threshold as 0.1.
+Here we set p value threshold as 0.1 to have higher sensitivity.
 
 ```{r}
 # extract significantly increased and decreased expression sites from summary table
@@ -411,10 +426,13 @@ bams_GR <- c("data/aligned_GR_t0/GR_t0_rep2.bam",
              "data/aligned/GR_t12_rep3.bam")
 
 # create summarized experiment object
-# we still use consensus peaks here because the peaks for GR are missing from the original paper supplementary materials, and we decide not to run peak calling process for simplicity
-se_GR <- chromVAR::getCounts(alignment_files = bams_GR, peaks = merged_peaks, paired = FALSE, format = "bam")
-saveRDS(se_GR, "data/se/GR_se.rds")
-se_GR
+### we still use consensus peaks here
+### because the peaks for GR at time point 0
+### are missing from the original paper supplementary materials,
+### and we decide not to run peak calling process for simplicity
+se_GR <- chromVAR::getCounts(alignment_files = bams_GR, peaks = merged_peaks,
+                             paired = FALSE, format = "bam")
+saveRDS(se_GR, "data/se/GR_se.rds") # save the data for later use
 ```
 
 ```{r}
@@ -468,4 +486,4 @@ is.de <- decideTests(res, p.value = 0.1)
 summary(is.de)
 ```
 
-If we compare the time point 12 and time point 0, we can see that the expression is increasing at most of the sites. This result demonstrates that the TF activity of GR is actually activated at the very beginning of synthetic GC dexamethasone exposure, i.e. between the time point 0 and time point 1.
+If we compare the time point 12 and time point 0, we can see that the up-regulated sites are much more than the down-regulated sites. Here we have a lot of non-significant sites because we use the consensus peak set as before, i.e. including the peak sites at time point 0. What we would like to compare is simply the difference of numbers of significantly up and significantly down sites. This result demonstrates that the TF activity of GR is actually activated at the very beginning of synthetic GC dexamethasone exposure, i.e. between the time point 0 and time point 1.

@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup4 setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
@@ -261,4 +261,4 @@ mcnemar.test(contingency_table)
 
 ```
 
-Actually the sample size for group 2 is too small that we can hardly get any statistical results from it. For group 1 we can see somewhat significant results, but I think it's not strong enough to make a conclusion.
+Actually the sample size for group 2 is too small that we can hardly get any statistical results from it. For group 1 we can see somewhat significant results (p<0.05), but I think it's not strong enough to make a conclusion. To summarize, in both groups, the changes of accessibility between t1 and t12 are not obvious. This is somewhat consistent with the statement in the original paper that "chromatin accessibility does not predetermine GR binding".
