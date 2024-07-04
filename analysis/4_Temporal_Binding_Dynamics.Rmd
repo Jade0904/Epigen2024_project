@@ -23,7 +23,7 @@ suppressPackageStartupMessages({
 })
 ```
 
-## Temporal Binding Dynamics
+# Temporal Binding Dynamics
 
 In the pairwise comparisons analysis, we found that most of the colocated binding sites are found in non-dynamic peaks. We inferred that, this is because most of the TF dynamics happen between time point 0 and 1, and thus these differential binding sites can not be significantly detected if we do the differential analysis between time point 1 and 12, and actually aggregated in non-significant group. In this chapter, we are going to compare the peaks at different time points to verify this statement.
 
@@ -47,7 +47,7 @@ DNase_t1 <- rtracklayer::import("data/peaks/DNase_t1_rep2.bed.gz", format = "nar
 DNase_t12 <- rtracklayer::import("data/peaks/DNase_t12_rep2.bed.gz", format = "narrowPeak")
 ```
 
-### use Upset plot to see the intersection
+### Use Upset plot to see the intersection
 
 ```{r}
 # GR
@@ -111,11 +111,13 @@ JUNB_GR_t1 <- intersect(JUNB_t1, GR_t1)
 
 print("At time point 1:")
 
-JUN_t1_prop <- round(sum(overlapsAny(JUN_GR_t1, JUNB_GR_t1))/length(JUN_GR_t1), digits = 4) * 100
-print(paste0("Of the JUN sites within GR sites, ", as.character(JUN_t1_prop), "% overlap JUNB sites within GR sites."))
+JUN_t1_prop <- round(sum(overlapsAny(JUN_GR_t1, JUNB_GR_t1))/length(JUN_GR_t1), digits = 4)*100
+print(paste0("Of the JUN sites within GR sites, ", as.character(JUN_t1_prop),
+             "% overlap JUNB sites within GR sites."))
 
-JUNB_t1_prop <- round(sum(overlapsAny(JUNB_GR_t1, JUN_GR_t1))/length(JUNB_GR_t1), digits = 4) * 100
-print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t1_prop), "% overlap JUN sites within GR sites."))
+JUNB_t1_prop <- round(sum(overlapsAny(JUNB_GR_t1, JUN_GR_t1))/length(JUNB_GR_t1), digits = 4)*100
+print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t1_prop),
+             "% overlap JUN sites within GR sites."))
 ```
 
 ```{r}
@@ -126,46 +128,56 @@ JUNB_GR_t12 <- intersect(JUNB_t12, GR_t12)
 print("At time point 12:")
 
 suppressWarnings({
-  JUN_t12_prop <- round(sum(overlapsAny(JUN_GR_t12, JUNB_GR_t12))/length(JUN_GR_t12), digits = 4) * 100
+  JUN_t12_prop <- round(sum(overlapsAny(JUN_GR_t12, JUNB_GR_t12))/length(JUN_GR_t12), digits = 4)*100
 })
-print(paste0("Of the JUN sites within GR sites, ", as.character(JUN_t12_prop), "% overlap JUNB sites within GR sites."))
+print(paste0("Of the JUN sites within GR sites, ", as.character(JUN_t12_prop),
+             "% overlap JUNB sites within GR sites."))
 
 suppressWarnings({
-  JUNB_t12_prop <- round(sum(overlapsAny(JUNB_GR_t12, JUN_GR_t12))/length(JUNB_GR_t12), digits = 4) * 100
+  JUNB_t12_prop <- round(sum(overlapsAny(JUNB_GR_t12, JUN_GR_t12))/length(JUNB_GR_t12), digits = 4)*100
 })
-print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t12_prop), "% overlap JUN sites within GR sites."))
+print(paste0("Of the JUNB sites within GR sites, ", as.character(JUNB_t12_prop),
+             "% overlap JUN sites within GR sites."))
 ```
 
-### differential accessibility between different groups of GR sites
+### Differential accessibility between different groups of GR sites
 
 Here we would like to separate GR sites into two groups: the ones that gain JUN/JUNB sites, and the ones do not. And we are interested in the GR sites that gain JUN/JUNB show more change in accessibility than that don't.
 
 ```{r}
 # import GR peak sets at t1
 GR_t1_peaks <- c("GR_t1_rep1.bed.gz", "GR_t1_rep2.bed.gz", "GR_t1_rep3.bed.gz")
-GR_t1_peaks <- lapply(file.path("data/peaks", GR_t1_peaks), rtracklayer::import, format="narrowPeak")
+GR_t1_peaks <- lapply(file.path("data/peaks", GR_t1_peaks),
+                      rtracklayer::import, format="narrowPeak")
 GR_t1_peaks <- reduce(unlist(GRangesList(GR_t1_peaks)), with.revmap=TRUE)
 # length(GR_t1_peaks) 11740
 
 # import JUN/JUNB peak sets at t1
-JUN_JUNB_t1_peaks <- c("JUN_t1_rep2.bed.gz", "JUN_t1_rep3.bed.gz", "JUNB_t1_rep2.bed.gz", "JUNB_t1_rep3.bed.gz")
-JUN_JUNB_t1_peaks <- lapply(file.path("data/peaks", JUN_JUNB_t1_peaks), rtracklayer::import, format="narrowPeak")
+JUN_JUNB_t1_peaks <- c("JUN_t1_rep2.bed.gz", "JUN_t1_rep3.bed.gz",
+                       "JUNB_t1_rep2.bed.gz", "JUNB_t1_rep3.bed.gz")
+JUN_JUNB_t1_peaks <- lapply(file.path("data/peaks", JUN_JUNB_t1_peaks),
+                            rtracklayer::import, format="narrowPeak")
 JUN_JUNB_t1_peaks <- reduce(unlist(GRangesList(JUN_JUNB_t1_peaks)), with.revmap=TRUE)
 # length(JUN_JUNB_t1_peaks) 35808
 
 # subset GR peaks that do not have JUN/JUNB at t1
-GR_t1_peaks <- subsetByOverlaps(GR_t1_peaks, JUN_JUNB_t1_peaks, invert = FALSE)
+suppressWarnings({
+  GR_t1_peaks <- subsetByOverlaps(GR_t1_peaks, JUN_JUNB_t1_peaks, invert = FALSE)
+})
 # length(GR_t1_peaks) 9495
 
 # import GR peak sets at t12
 GR_t12_peaks <- c("GR_t12_rep1.bed.gz", "GR_t12_rep2.bed.gz", "GR_t12_rep3.bed.gz")
-GR_t12_peaks <- lapply(file.path("data/peaks", GR_t12_peaks), rtracklayer::import, format="narrowPeak")
+GR_t12_peaks <- lapply(file.path("data/peaks", GR_t12_peaks),
+                       rtracklayer::import, format="narrowPeak")
 GR_t12_peaks <- reduce(unlist(GRangesList(GR_t12_peaks)), with.revmap=TRUE)
 # length(GR_t12_peaks) 5591
 
 # import JUN/JUNB peak sets at t12
-JUN_JUNB_t12_peaks <- c("JUN_t12_rep1.bed.gz", "JUN_t12_rep2.bed.gz", "JUN_t12_rep3.bed.gz", "JUNB_t12_rep1.bed.gz", "JUNB_t12_rep2.bed.gz")
-JUN_JUNB_t12_peaks <- lapply(file.path("data/peaks", JUN_JUNB_t12_peaks), rtracklayer::import, format="narrowPeak")
+JUN_JUNB_t12_peaks <- c("JUN_t12_rep1.bed.gz", "JUN_t12_rep2.bed.gz",
+                        "JUN_t12_rep3.bed.gz", "JUNB_t12_rep1.bed.gz", "JUNB_t12_rep2.bed.gz")
+JUN_JUNB_t12_peaks <- lapply(file.path("data/peaks", JUN_JUNB_t12_peaks),
+                             rtracklayer::import, format="narrowPeak")
 JUN_JUNB_t12_peaks <- reduce(unlist(GRangesList(JUN_JUNB_t12_peaks)), with.revmap=TRUE)
 # length(JUN_JUNB_t12_peaks) 67785
 
@@ -184,13 +196,17 @@ GR_group2 <- subsetByOverlaps(GR_t1_peaks, GR_t12_peaks_group2)
 # length(GR_group2) 19
 
 # import DNase peaks at t1
-DNase_t1_peaks <- c("DNase_t1_rep1.bed.gz", "DNase_t1_rep2.bed.gz", "DNase_t1_rep3.bed.gz", "DNase_t1_rep4.bed.gz", "DNase_t1_rep5.bed.gz")
-DNase_t1_peaks <- lapply(file.path("data/peaks", DNase_t1_peaks), rtracklayer::import, format="narrowPeak")
+DNase_t1_peaks <- c("DNase_t1_rep1.bed.gz", "DNase_t1_rep2.bed.gz",
+                    "DNase_t1_rep3.bed.gz", "DNase_t1_rep4.bed.gz", "DNase_t1_rep5.bed.gz")
+DNase_t1_peaks <- lapply(file.path("data/peaks", DNase_t1_peaks),
+                         rtracklayer::import, format="narrowPeak")
 DNase_t1_peaks <- reduce(unlist(GRangesList(DNase_t1_peaks)), with.revmap=TRUE)
 
 # import DNase peaks at t12
-DNase_t12_peaks <- c("DNase_t12_rep1.bed.gz", "DNase_t12_rep2.bed.gz", "DNase_t12_rep3.bed.gz", "DNase_t12_rep5.bed.gz")
-DNase_t12_peaks <- lapply(file.path("data/peaks", DNase_t12_peaks), rtracklayer::import, format="narrowPeak")
+DNase_t12_peaks <- c("DNase_t12_rep1.bed.gz", "DNase_t12_rep2.bed.gz",
+                     "DNase_t12_rep3.bed.gz", "DNase_t12_rep5.bed.gz")
+DNase_t12_peaks <- lapply(file.path("data/peaks", DNase_t12_peaks),
+                          rtracklayer::import, format="narrowPeak")
 DNase_t12_peaks <- reduce(unlist(GRangesList(DNase_t12_peaks)), with.revmap=TRUE)
 
 # subset GR sites that have accessibility at t1
@@ -213,9 +229,12 @@ However, the number of group 2 is too small to make a conclusion. Most of the GR
 ```{r}
 # create data frame to make barplot
 data <- data.frame(
-  Group = factor(c("Group 1", "Group 1", "Group 2", "Group 2"), levels = c("Group 1", "Group 2")),
-  Time = factor(c("Time 1", "Time 12", "Time 1", "Time 12"), levels = c("Time 1", "Time 12")),
-  Values = c(length(GR_group1_t1), length(GR_group1_t12), length(GR_group2_t1), length(GR_group2_t12))
+  Group = factor(c("Group 1", "Group 1", "Group 2", "Group 2"),
+                 levels = c("Group 1", "Group 2")),
+  Time = factor(c("Time 1", "Time 12", "Time 1", "Time 12"),
+                levels = c("Time 1", "Time 12")),
+  Values = c(length(GR_group1_t1), length(GR_group1_t12),
+             length(GR_group2_t1), length(GR_group2_t12))
 )
 
 # stacked bar plot

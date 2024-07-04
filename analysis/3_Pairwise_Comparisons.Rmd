@@ -10,6 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
+# Pairwise Comparisons
+
+In this section, we will do the pairwise comparison between different peak sets, distinguishing the dynamic and non-dynamic regions. We will calculate the Jaccard Index for the dynamic and non-dynamic peaks, and then visualize the results using heatmaps.
+
 ```{r}
 # import useful packages
 suppressPackageStartupMessages({
@@ -76,7 +80,9 @@ suppressWarnings({
   jac_GR_JUNB <- sum(width(intersect(Sig_GR, Sig_JUNB))) / sum(width(union(Sig_GR, Sig_JUNB)))
   jac_JUN_JUNB <- sum(width(intersect(Sig_JUN, Sig_JUNB))) / sum(width(union(Sig_JUN, Sig_JUNB)))
 
-  jac_dynamic <- matrix(nrow = 4, ncol = 4, dimnames = list(c("DNase", "GR", "JUN", "JUNB"), c("DNase", "GR", "JUN", "JUNB")))
+  jac_dynamic <- matrix(nrow = 4, ncol = 4,
+                        dimnames = list(c("DNase", "GR", "JUN", "JUNB"),
+                                        c("DNase", "GR", "JUN", "JUNB")))
 
   jac_dynamic["DNase", "DNase"] <- 1
   jac_dynamic["GR", "GR"] <- 1
@@ -107,7 +113,9 @@ suppressWarnings({
   jac_GR_JUNB <- sum(width(intersect(NotSig_GR, NotSig_JUNB))) / sum(width(union(NotSig_GR, NotSig_JUNB)))
   jac_JUN_JUNB <- sum(width(intersect(NotSig_JUN, NotSig_JUNB))) / sum(width(union(NotSig_JUN, NotSig_JUNB)))
 
-  jac_nondynamic <- matrix(nrow = 4, ncol = 4, dimnames = list(c("DNase", "GR", "JUN", "JUNB"), c("DNase", "GR", "JUN", "JUNB")))
+  jac_nondynamic <- matrix(nrow = 4, ncol = 4,
+                           dimnames = list(c("DNase", "GR", "JUN", "JUNB"),
+                                           c("DNase", "GR", "JUN", "JUNB")))
 
   jac_nondynamic["DNase", "DNase"] <- 1
   jac_nondynamic["GR", "GR"] <- 1
