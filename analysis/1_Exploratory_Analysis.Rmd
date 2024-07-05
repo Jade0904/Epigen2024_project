@@ -13,15 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 GC is a glucocorticoid receptor (GR), a transcription factor that binds to specific genomic sites to influence gene expression. Traditional views have focused on DNA accessibility as the primary determinant of GR binding. However, recent research highlights the importance of other genomic features, including the co-occupancy of transcription factors (TFs), histone modifications, and the overall chromatin landscape.
 
-Our project aims to investigate the binding dynamics of the GR, JUN, and JUNB transcription factors in the A549 human epithelial lung cell line following treatment with a GR-activating drug. By leveraging high-quality ChIP-seq and DNase-seq datasets from Ian C. McDowell et al., we will analyze TF occupancy and chromatin accessibility over a 12-hour period of GC exposure. We focused on how GR interacts with JUN and JUNB, and how these interactions influence genomic binding sites and subsequent gene expression changes.
+Our project aims to investigate the binding dynamics and comprehensive analyses of the GR, JUN, and JUNB transcription factors in the  A549 human epithelial lung cell line following treatment with a GR-activating drug. By leveraging high-quality DNase-seq datasets from Ian C. McDowell et al., we will analyze TF occupancy between time point 1 and time point 12. We focused on how GR interacts with JUN and JUNB, and how these interactions influence genomic binding sites and subsequent gene expression changes.
 
 We will conduct a series of analyses to achieve the following objectives:
 1. Examine the binding dynamics of GR, JUN, and JUNB.
 2. Identify factors that dictate GR binding specificity in the presence of JUN and JUNB.
-3. Correlate TF binding changes with alterations in gene expression and chromatin state.
 
-Our methods will include peak calling and annotation; temporal and statistical analyses of TF binding and chromatin accessibility; co-occurrence analyses; and correlation studies using heatmaps and clustering. We will also perform longitudinal analyses of GR binding dynamics, overlap quantification of early and late GR binding sites, and differential accessibility profiling.
-
+Our methods will Data Acquisition, Differential Analysis, Visualization of Differential Peaks, Validation with GR ChIP-seq,Dynamic vs. Non-Dynamic Peaks for each group (GR, JUN, JUNB, DNase) and a pairwise comparison using Jaccard Index in dynamic and non-dynamic peak sets. Also checking the temporal binding dynamics within each ChIP-seq group (GR, JUN and JUNB) to see the Upset plot using the narrowPeak data from time point 1 and 12. 
 
 ```{r}
 # import useful packages
@@ -70,7 +68,9 @@ suppressPackageStartupMessages({
 # Importing data 
 
 base_path <- "/Users/paulailler/Documents/ETH/Master/Bioinformatics/Epigen2024_project/data/peaks/"
+
 # Define the file paths with corresponding variable names
+
 file_paths <- c(
   "GR_t1_rep2.bed.gz",
   "GR_t12_rep2.bed.gz",
@@ -132,6 +132,7 @@ plot_t12 <- ggplot(peak_lengths_df_t12, aes(x = Length, fill = Condition)) +
   scale_fill_brewer(palette = "Set3") +
   xlim(0, 2000)
 
+
 # Load the hg38 reference genome
 genome <- BSgenome.Hsapiens.UCSC.hg38
 
@@ -139,14 +140,15 @@ genome <- BSgenome.Hsapiens.UCSC.hg38
 JUNmotifs <- MotifDb::query(MotifDb, c("JUN"), "Hsapiens")
 JUNmotif <- JUNmotifs[["Hsapiens-HOCOMOCOv10-JUN_HUMAN.H10MO.A"]]
 view_motifs(JUNmotif)
-
 JUNmotif2 <- convert_motifs(JUNmotif, class="TFBSTools-PWMatrix")
-moi <- motifmatchr::matchMotifs(JUNmotif2, chr1, out="positions", p.cutoff=1e-5)
-moi <- as(setNames(moi,names(chr19)), "GRanges")
 
 # Match motifs in DNase-seq peaks
 JUN_moi_t1 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t1"]], genome = genome)
+JUN_moi_t1 <- as(setNames(rowRanges(JUN_moi_t1), names(peaks_list[["peaks_DNase_t1"]])), "GRanges")
+
 JUN_moi_t12 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
+JUN_moi_t12 <- as(setNames(rowRanges(JUN_moi_t12), names(peaks_list[["peaks_DNase_t12"]])), "GRanges")
+
 
 # Motif analysis for JUN
 JUNBmotifs <- MotifDb::query(MotifDb, c("JUNB"), "Hsapiens")
@@ -155,23 +157,51 @@ view_motifs(JUNBmotif)
 
 JUNBmotif2 <- convert_motifs(JUNBmotif, class="TFBSTools-PWMatrix")
 
+# Match motifs
 JUNB_moi_t1 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t1"]], genome = genome)
-JUNB_moi_t1 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
+JUNB_moi_t1 <- as(setNames(rowRanges(JUNB_moi_t1), names(peaks_list[["peaks_DNase_t1"]])), "GRanges")
+
+# Convert to GRanges
+JUNB_moi_t12 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
+JUNB_moi_t12 <- as(setNames(rowRanges(JUNB_moi_t12), names(peaks_list[["peaks_DNase_t12"]])), "GRanges")
 
 
 
-# 
-# annotated_GR_t1 <- epiwraps::annotateRegions(peaks_list[["peaks_GR_1"]], genome)
-# annotated_GR_t12 <- epiwraps::annotateRegions(peaks_list[["peaks_GR_t12"]], genome)
-# annotated_JUN_t1 <- epiwraps::annotateRegions(peaks_list[["peaks_JUN_t1"]], genome)
-# annotated_JUN_t12 <- epiwraps::annotateRegions(peaks_list[["peaks_JUN_t12"]], genome)
-# annotated_JUNB_t1 <- epiwraps::annotateRegions(peaks_list[["peaks_JUNB_t1"]], genome)
-# annotated_JUNB_t12 <- epiwraps::annotateRegions(peaks_list[["peaks_JUNB_t12"]], genome)
-# 
-# # Display annotated peaks
-# head(annotated_GR_t1)
-# head(annotated_GR_t12)
-# head(annotated_JUN_t1)
-# head(annotated_JUN_t12)
-# head(annotated_JUNB_t1)
-# head(annotated_JUNB_t12)
+gr_bw1 <- "../data/aligned/GR_t1_rep1.bigWig"  
+gr_bed1 <- "../data/peaks/GR_t1_rep2.bed"
+gr_bw12 <- "../data/aligned/GR_t12_rep1.bigWig"  
+gr_bed12 <- "../data/peaks/GR_t12_rep2.bed"
+jun_bw1 <- "../data/aligned/JUN_t1_rep1.bigWig"  
+jun_bed1 <- "../data/peaks/JUN_t1_rep2.bed"
+jun_bw12 <- "../data/aligned/JUN_t12_rep1.bigWig"  
+jun_bed12 <- "../data/peaks/JUN_t12_rep2.bed"
+
+junb_bw1 <- "../data/aligned/JUNB_t1_rep1.bigWig"
+junb_bed1 <- "../data/peaks/JUNB_t1_rep2.bed"
+junb_bw12 <- "../data/aligned/JUNB_t12_rep1.bigWig"
+junb_bed12 <- "../data/peaks/JUNB_t12_rep2.bed"
+
+# Import regions from BED files
+gr_regions1 <- rtracklayer::import(gr_bed1,format = "BED")
+gr_regions12 <- rtracklayer::import(gr_bed12)
+jun_regions1 <- rtracklayer::import(jun_bed1)
+jun_regions12 <- rtracklayer::import(jun_bed12)
+junb_regions1 <- rtracklayer::import(junb_bed1)
+junb_regions12 <- rtracklayer::import(junb_bed12)
+
+# Obtain the matrix of the signal around the regions
+gr_matrix1 <- signal2Matrix(gr_bw1, gr_regions1)
+gr_matrix12 <- signal2Matrix(gr_bw12, gr_regions12)
+jun_matrix1 <- signal2Matrix(jun_bw1, jun_regions1)
+jun_matrix12 <- signal2Matrix(jun_bw12, jun_regions12)
+junb_matrix1 <- signal2Matrix(junb_bw1, junb_regions1)
+junb_matrix12 <- signal2Matrix(junb_bw12, junb_regions12)
+
+
+# Plot heatmaps
+plotEnrichedHeatmaps(gr_matrix1, main = "GR t1")
+plotEnrichedHeatmaps(gr_matrix12, main = "GR t12")
+plotEnrichedHeatmaps(jun_matrix1, main = "JUN t1")
+plotEnrichedHeatmaps(jun_matrix12, main = "JUN t12")
+plotEnrichedHeatmaps(junb_matrix1, main = "JUNB t1")
+plotEnrichedHeatmaps(junb_matrix12, main = "JUNB t12")
