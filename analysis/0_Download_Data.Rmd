@@ -101,3 +101,14 @@ download.file("https://www.encodeproject.org/files/ENCFF181HLP/@@download/ENCFF1
 download.file("https://www.encodeproject.org/files/ENCFF870WJP/@@download/ENCFF870WJP.bam", dest = "data/aligned_GR_t0/GR_t0_rep3.bam", mode="wb")
 ```
 
+```{r, eval=FALSE}
+# Download Bigwig files for time point t1 & t12 for JUN,GR,JUNB
+download.file("https://www.encodeproject.org/files/ENCFF167PZR/@@download/ENCFF167PZR.bigWig", dest = "../data/aligned/JUN_t1_rep1.bigWig", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF121PTN/@@download/ENCFF121PTN.bigWig", dest = "../data/aligned/JUN_t12_rep1.bigWig", mode="wb")
+
+download.file("https://www.encodeproject.org/files/ENCFF434HBK/@@download/ENCFF434HBK.bigWig", dest = "../data/aligned/GR_t1_rep1.bigWig", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF613BWE/@@download/ENCFF613BWE.bigWig", dest = "../data/aligned/GR_t12_rep1.bigWig", mode="wb")
+
+download.file("https://www.encodeproject.org/files/ENCFF696UCJ/@@download/ENCFF696UCJ.bigWig", dest = "../data/aligned/JUNB_t1_rep1.bigWig", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF649QBD/@@download/ENCFF649QBD.bigWig", dest = "../data/aligned/JUNB_t12_rep1.bigWig", mode="wb")
+```
