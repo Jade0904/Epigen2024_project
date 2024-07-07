@@ -1,25 +1,32 @@
 ---
 title: "1_Exploratory_Analysis"
-author: "Paula Iller"
+author: "Zhihan Zhu, Paula Iller"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup1 setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 # Introduction
 
 GC is a glucocorticoid receptor (GR), a transcription factor that binds to specific genomic sites to influence gene expression. Traditional views have focused on DNA accessibility as the primary determinant of GR binding. However, recent research highlights the importance of other genomic features, including the co-occupancy of transcription factors (TFs), histone modifications, and the overall chromatin landscape.
 
-Our project aims to investigate the binding dynamics and comprehensive analyses of the GR, JUN, and JUNB transcription factors in the  A549 human epithelial lung cell line following treatment with a GR-activating drug. By leveraging high-quality DNase-seq datasets from Ian C. McDowell et al., we will analyze TF occupancy between time point 1 and time point 12. We focused on how GR interacts with JUN and JUNB, and how these interactions influence genomic binding sites and subsequent gene expression changes.
+Our project aims to investigate the binding dynamics and comprehensive analyses of the GR, JUN, and JUNB transcription factors in the A549 human epithelial lung cell line following treatment with a GR-activating drug. By leveraging high-quality ChIP-seq and DNase-seq datasets from Ian C. McDowell et al., we will analyze TF occupancy between time point 1 and time point 12. We focused on how the expression changes with treatment period, how GR interacts with JUN and JUNB, and how these interactions influence genomic binding sites.
 
 We will conduct a series of analyses to achieve the following objectives:
-1. Examine the binding dynamics of GR, JUN, and JUNB.
-2. Identify factors that dictate GR binding specificity in the presence of JUN and JUNB.
 
-Our methods will Data Acquisition, Differential Analysis, Visualization of Differential Peaks, Validation with GR ChIP-seq,Dynamic vs. Non-Dynamic Peaks for each group (GR, JUN, JUNB, DNase) and a pairwise comparison using Jaccard Index in dynamic and non-dynamic peak sets. Also checking the temporal binding dynamics within each ChIP-seq group (GR, JUN and JUNB) to see the Upset plot using the narrowPeak data from time point 1 and 12. 
+1. Differential expression of GR, JUN, JUNB and DNase-seq.
+
+2. Jaccard Index for the dynamic and non-dynamic peaks.
+
+3. Temporal binding dynamics within each ChIP-seq group (GR, JUN, JUNB) and their relationship with chromatin accessibility (DNase-seq).
+
+Our methods will include data acquisition, differential analysis, visualization of differential peaks, validation with GR ChIP-seq, dynamic vs. non-dynamic peaks for each group (GR, JUN, JUNB, DNase) and pairwise comparison.
+
+# Exploratory Analysis
 
 ```{r}
 # import useful packages
@@ -36,14 +43,16 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(sechm)
     library(epiwraps)
+    library(universalmotif)
 })
-
 ```
+
+First, we will import the peak data for each transcription factor (GR, JUN, JUNB) and DNase-seq at time points t1 and t12. We will then visualize the distribution of peak lengths for each condition.
 
 ```{r}
 # Importing data 
 
-base_path <- "/Users/paulailler/Documents/ETH/Master/Bioinformatics/Epigen2024_project/data/peaks/"
+base_path <- "data/peaks"
 
 # Define the file paths with corresponding variable names
 
@@ -69,8 +78,8 @@ variable_names <- c(
   "peaks_DNase_t12"
 )
 
-
 # Import each file individually and store in the list
+peaks_list <- list()
 for (i in 1:length(file_paths)) {
   peaks <- rtracklayer::import(file.path(base_path, file_paths[i]), format = "NarrowPeak")
   seqlevelsStyle(peaks) <- "UCSC" 
@@ -91,7 +100,9 @@ peak_lengths_df_t12 <- do.call(rbind, list(
   data.frame(Condition = "JUNB_t12", Length = width(peaks_list[["peaks_JUNB_t12"]])),
   data.frame(Condition = "DNase_t12", Length = width(peaks_list[["peaks_DNase_t12"]]))
 ))
+```
 
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Distribution of Peak Length at t1')}
 # Plot histograms of peak lengths for t1
 plot_t1 <- ggplot(peak_lengths_df_t1, aes(x = Length, fill = Condition)) +
   geom_histogram(binwidth = 50, alpha = 0.6, position = "identity") +
@@ -99,7 +110,10 @@ plot_t1 <- ggplot(peak_lengths_df_t1, aes(x = Length, fill = Condition)) +
   labs(title = "Distribution of Peak Lengths (t1)", x = "Peak Length (bp)", y = "Count") +
   scale_fill_brewer(palette = "Set3") +
   xlim(0, 2000)
+plot_t1
+```
 
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Distribution of Peak Length at t12')}
 # Plot histograms of peak lengths for t12
 plot_t12 <- ggplot(peak_lengths_df_t12, aes(x = Length, fill = Condition)) +
   geom_histogram(binwidth = 50, alpha = 0.6, position = "identity") +
@@ -107,77 +121,149 @@ plot_t12 <- ggplot(peak_lengths_df_t12, aes(x = Length, fill = Condition)) +
   labs(title = "Distribution of Peak Lengths (t12)", x = "Peak Length (bp)", y = "Count") +
   scale_fill_brewer(palette = "Set3") +
   xlim(0, 2000)
+plot_t12
+```
 
+We can see that most of the peaks are around 200-300 bp in length for all conditions. Next, we will perform motif analysis for the JUN and JUNB transcription factors. We will visualize the motifs and match them to the ChIP-seq peaks at time points t1 and t12.
 
+```{r}
 # Load the hg38 reference genome
 genome <- BSgenome.Hsapiens.UCSC.hg38
+```
 
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('View Motifs for JUN')}
 # Motif analysis for JUN
 JUNmotifs <- MotifDb::query(MotifDb, c("JUN"), "Hsapiens")
 JUNmotif <- JUNmotifs[["Hsapiens-HOCOMOCOv10-JUN_HUMAN.H10MO.A"]]
 view_motifs(JUNmotif)
+```
+
+```{r}
+# convert motifs
 JUNmotif2 <- convert_motifs(JUNmotif, class="TFBSTools-PWMatrix")
 
-# Match motifs in DNase-seq peaks
-JUN_moi_t1 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t1"]], genome = genome)
-JUN_moi_t1 <- as(setNames(rowRanges(JUN_moi_t1), names(peaks_list[["peaks_DNase_t1"]])), "GRanges")
+# Match motifs in JUN ChIP-seq peaks at t1
+JUN_moi_t1 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_JUN_t1"]],
+                          genome = genome, out = "positions")
+JUN_moi_t1 <- JUN_moi_t1[[1]] # for one motif
 
-JUN_moi_t12 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
-JUN_moi_t12 <- as(setNames(rowRanges(JUN_moi_t12), names(peaks_list[["peaks_DNase_t12"]])), "GRanges")
+# Of all the JUN peaks at t1, how many contain the JUN motif?
+suppressWarnings({
+  table(overlapsAny(peaks_list[["peaks_JUN_t1"]], JUN_moi_t1))
+})
 
+# Match motifs in JUN ChIP-seq peaks at t12
+JUN_moi_t12 <- matchMotifs(JUNmotif2, subject = peaks_list[["peaks_DNase_t12"]],
+                           genome = genome, out = "positions")
+JUN_moi_t12 <- JUN_moi_t12[[1]] # for one motif
 
-# Motif analysis for JUN
+# Of all the DNase-seq peaks at t12, how many contain the JUN motif?
+suppressWarnings({
+  table(overlapsAny(peaks_list[["peaks_JUN_t12"]], JUN_moi_t12))
+})
+```
+
+Of 14326 peaks of JUN at t1, 3135 (21.9%) contain a JUN motif.
+
+Of 56994 peaks of JUN at t12, 8543 (15.0%) contain a JUN motif.
+
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('View Motifs for JUNB')}
+# Motif analysis for JUNB
 JUNBmotifs <- MotifDb::query(MotifDb, c("JUNB"), "Hsapiens")
 JUNBmotif <- JUNBmotifs[["Hsapiens-HOCOMOCOv11-core-A-JUNB_HUMAN.H11MO.0.A"]]
 view_motifs(JUNBmotif)
+```
 
+This is very similar to the motif for JUN.
+
+```{r}
 JUNBmotif2 <- convert_motifs(JUNBmotif, class="TFBSTools-PWMatrix")
 
-# Match motifs
-JUNB_moi_t1 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t1"]], genome = genome)
-JUNB_moi_t1 <- as(setNames(rowRanges(JUNB_moi_t1), names(peaks_list[["peaks_DNase_t1"]])), "GRanges")
+# Match motifs in JUNB ChIP-seq peaks at t1
+JUNB_moi_t1 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t1"]],
+                           genome = genome, out = "positions")
+JUNB_moi_t1 <- JUNB_moi_t1[[1]] # for one motif
 
-# Convert to GRanges
-JUNB_moi_t12 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_DNase_t12"]], genome = genome)
-JUNB_moi_t12 <- as(setNames(rowRanges(JUNB_moi_t12), names(peaks_list[["peaks_DNase_t12"]])), "GRanges")
+# Of all the JUNB peaks at t1, how many contain the JUNB motif?
+suppressWarnings({
+  table(overlapsAny(peaks_list[["peaks_JUNB_t1"]], JUNB_moi_t1))
+})
+
+# Match motifs in JUNB ChIP-seq peaks at t12
+JUNB_moi_t12 <- matchMotifs(JUNBmotif2, subject = peaks_list[["peaks_JUNB_t12"]],
+                            genome = genome, out = "positions")
+JUNB_moi_t12 <- JUNB_moi_t12[[1]] # for one motif
+
+# Of all the JUNB peaks at t12, how many contain the JUNB motif?
+suppressWarnings({
+  table(overlapsAny(peaks_list[["peaks_JUNB_t12"]], JUNB_moi_t12))
+})
+```
+
+Of 12568 peaks of JUNB at t1, 5218 (41.5%) contain a JUNB motif.
+
+Of 38990 peaks of JUNB at t12, 18060 (46.3%) contain a JUNB motif.
+
+Next, we will visualize the DNase-seq signals around motif occurrences for JUN at time point 1, as an example.
+
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('DNase-seq Signals around JUN Motif Occurrences')}
+# prepare the list of tracks
+tracks <- c("DNase_t1"="data/aligned/DNase_t1_rep2.bigWig",
+            "DNase_t12"="data/aligned/DNase_t12_rep2.bigWig")
+
+# extract signals around motif occurences
+sm_JUN <- signal2Matrix(tracks, JUN_moi_t1, w = 5, extend = 1000)
+
+# use background normalization
+nf <- getNormFactors(tracks, nwind = 5000L)
+
+# renormalize the signal matrices
+sm_JUN <- renormalizeSignalMatrices(sm_JUN, scaleFactors = nf)
+
+# plot the signals for JUN
+plotEnrichedHeatmaps(sm_JUN, trim = 0.95, colors = c("white", "darkred"))
+```
+
+Let's try if clustering could separate the ChIP-seq peaks into different groups. Here we will focus on the data from time point 1.
+
+```{r, eval=FALSE}
+# combine ChIP-seq peaks, subset from peaks_list
+ChIP_peaks_t1 <- list(
+  peaks_GR_t1 = peaks_list[["peaks_GR_t1"]],
+  peaks_JUN_t1 = peaks_list[["peaks_JUN_t1"]],
+  peaks_JUNB_t1 = peaks_list[["peaks_JUNB_t1"]]
+)
+ChIP_peaks_t1 <- reduce(unlist(GRangesList(ChIP_peaks_t1)))
+
+# import tracks
+tracks <- c("GR_t1"="data/aligned/GR_t1_rep2.bigWig",
+            "JUN_t1"="data/aligned/JUN_t1_rep2.bigWig",
+            "JUNB_t1"="data/aligned/JUNB_t1_rep2.bigWig")
+
+# extract signals around ChIP-seq peaks
+ese <- signal2Matrix(tracks, ChIP_peaks_t1, extend = 2000)
+
+# clustering
+set.seed(123) # for reproducibility
+cl <- clusterSignalMatrices(ese, k=5)
+rowData(ese)$cluster <- cl
+
+# save ese object for later use
+saveRDS(ese, "data/se/ChIP_ese.rds")
+```
 
 
+```{r}
+# read ese object
+ese <- readRDS("data/se/ChIP_ese.rds")
+table(rowData(ese)$cluster)
+```
 
-gr_bw1 <- "../data/aligned/GR_t1_rep1.bigWig"  
-gr_bed1 <- "../data/peaks/GR_t1_rep2.bed"
-gr_bw12 <- "../data/aligned/GR_t12_rep1.bigWig"  
-gr_bed12 <- "../data/peaks/GR_t12_rep2.bed"
-jun_bw1 <- "../data/aligned/JUN_t1_rep1.bigWig"  
-jun_bed1 <- "../data/peaks/JUN_t1_rep2.bed"
-jun_bw12 <- "../data/aligned/JUN_t12_rep1.bigWig"  
-jun_bed12 <- "../data/peaks/JUN_t12_rep2.bed"
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Clustered Heatmap of ChIP-seq Peaks at t1')}
+# plot the clustered heatmap
+colors <- c("1"="red", "2"="blue", "3"="darkgreen", "4"="purple", "5"="orange")
+plotEnrichedHeatmaps(ese, row_split = rowData(ese)$cluster,
+                     mean_color = colors, colors = c("white", "darkred"))
+```
 
-junb_bw1 <- "../data/aligned/JUNB_t1_rep1.bigWig"
-junb_bed1 <- "../data/peaks/JUNB_t1_rep2.bed"
-junb_bw12 <- "../data/aligned/JUNB_t12_rep1.bigWig"
-junb_bed12 <- "../data/peaks/JUNB_t12_rep2.bed"
-
-# Import regions from BED files
-gr_regions1 <- rtracklayer::import(gr_bed1,format = "BED")
-gr_regions12 <- rtracklayer::import(gr_bed12)
-jun_regions1 <- rtracklayer::import(jun_bed1)
-jun_regions12 <- rtracklayer::import(jun_bed12)
-junb_regions1 <- rtracklayer::import(junb_bed1)
-junb_regions12 <- rtracklayer::import(junb_bed12)
-
-# Obtain the matrix of the signal around the regions
-gr_matrix1 <- signal2Matrix(gr_bw1, gr_regions1)
-gr_matrix12 <- signal2Matrix(gr_bw12, gr_regions12)
-jun_matrix1 <- signal2Matrix(jun_bw1, jun_regions1)
-jun_matrix12 <- signal2Matrix(jun_bw12, jun_regions12)
-junb_matrix1 <- signal2Matrix(junb_bw1, junb_regions1)
-junb_matrix12 <- signal2Matrix(junb_bw12, junb_regions12)
-
-
-# Plot heatmaps
-plotEnrichedHeatmaps(gr_matrix1, main = "GR t1")
-plotEnrichedHeatmaps(gr_matrix12, main = "GR t12")
-plotEnrichedHeatmaps(jun_matrix1, main = "JUN t1")
-plotEnrichedHeatmaps(jun_matrix12, main = "JUN t12")
-plotEnrichedHeatmaps(junb_matrix1, main = "JUNB t1")
-plotEnrichedHeatmaps(junb_matrix12, main = "JUNB t12")
+The signals for GR and JUNB are more similar to each other than to JUN. This suggests that GR and JUNB may have more similar binding patterns, while JUN has a somewhat distinct binding pattern. We can see that in cluster 3, while JUN has some signals, GR and JUNB nearly have no signals. Generally speaking, GR, JUN and JUNB have similar binding patterns, which is consistent with the previous knowledge that they commonly colocalize, according to the literature. We also tried different clustering numbers but got very similar results.

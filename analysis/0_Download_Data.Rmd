@@ -102,13 +102,17 @@ download.file("https://www.encodeproject.org/files/ENCFF870WJP/@@download/ENCFF8
 ```
 
 ```{r, eval=FALSE}
-# Download Bigwig files for time point t1 & t12 for JUN,GR,JUNB
-download.file("https://www.encodeproject.org/files/ENCFF167PZR/@@download/ENCFF167PZR.bigWig", dest = "../data/aligned/JUN_t1_rep1.bigWig", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF121PTN/@@download/ENCFF121PTN.bigWig", dest = "../data/aligned/JUN_t12_rep1.bigWig", mode="wb")
+# Download Bigwig files for time point t1 & t12 for GR, JUN, JUNB, and DNase
+options(timeout=3600)
+download.file("https://www.encodeproject.org/files/ENCFF849GMQ/@@download/ENCFF849GMQ.bigWig", dest = "data/aligned/GR_t1_rep2.bigWig")
+download.file("https://www.encodeproject.org/files/ENCFF505SYX/@@download/ENCFF505SYX.bigWig", dest = "data/aligned/GR_t12_rep2.bigWig")
 
-download.file("https://www.encodeproject.org/files/ENCFF434HBK/@@download/ENCFF434HBK.bigWig", dest = "../data/aligned/GR_t1_rep1.bigWig", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF613BWE/@@download/ENCFF613BWE.bigWig", dest = "../data/aligned/GR_t12_rep1.bigWig", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF167PZR/@@download/ENCFF167PZR.bigWig", dest = "data/aligned/JUN_t1_rep2.bigWig")
+download.file("https://www.encodeproject.org/files/ENCFF299IVF/@@download/ENCFF299IVF.bigWig", dest = "data/aligned/JUN_t12_rep2.bigWig")
 
-download.file("https://www.encodeproject.org/files/ENCFF696UCJ/@@download/ENCFF696UCJ.bigWig", dest = "../data/aligned/JUNB_t1_rep1.bigWig", mode="wb")
-download.file("https://www.encodeproject.org/files/ENCFF649QBD/@@download/ENCFF649QBD.bigWig", dest = "../data/aligned/JUNB_t12_rep1.bigWig", mode="wb")
+download.file("https://www.encodeproject.org/files/ENCFF696UCJ/@@download/ENCFF696UCJ.bigWig", dest = "data/aligned/JUNB_t1_rep2.bigWig")
+download.file("https://www.encodeproject.org/files/ENCFF649QBD/@@download/ENCFF649QBD.bigWig", dest = "data/aligned/JUNB_t12_rep2.bigWig")
+
+download.file("https://www.encodeproject.org/files/ENCFF552KBR/@@download/ENCFF552KBR.bigWig", dest = "data/aligned/DNase_t1_rep2.bigWig")
+download.file("https://www.encodeproject.org/files/ENCFF591NOS/@@download/ENCFF591NOS.bigWig", dest = "data/aligned/DNase_t12_rep2.bigWig")
 ```

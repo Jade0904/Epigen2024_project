@@ -1,6 +1,6 @@
 ---
-title: "pdf_report"
-author: "Zhihan Zhu"
+title: "Comparison of the binding of the glucocorticoid receptor (GR), JUN and JUNB in a cell line upon treatment with a GR-activating drug"
+author: "Zhihan Zhu, Paula Iller"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
@@ -11,8 +11,22 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
 ```{r}
+# Contribution:
+
+# Zhihan Zhu: Exploratory Analysis, Temporal Changes,
+# Pairwise Comparisons, Temporal Binding Dynamics, Discussion
+
+# Paula Iller: Introduction, Exploratory Analysis
+```
+
+
+```{r, include=FALSE}
 #library("rmarkdown")
 #render("analysis/pdf_report.Rmd", pdf_document(), knit_root_dir = "..")
+```
+
+```{r child="analysis/1_Exploratory_Analysis.Rmd"}
+
 ```
 
 ```{r child='analysis/2_Temporal_Changes.Rmd'}

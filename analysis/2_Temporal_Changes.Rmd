@@ -113,7 +113,7 @@ rownames(se) <- as.character(granges(se))
 
 Here we use the famous edgeR package to do the differential analysis. We first prepare the DGEList object, then calculate normalization factors, estimate NB dispersion, and finally estimate QL dispersions.
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Plot Biological Coefficient of Variation')}
 # prepare DGE object
 y <- DGEList(counts=assays(se)$counts)
 
@@ -369,12 +369,9 @@ de_JUNB <- decideTests(res_JUNB, p.value = 0.1)
 #summary(de_DNase)
 ```
 
-```{r}
-# plot test results
-plotMD(res_DNase, status=de_DNase)
-plotMD(res_GR, status = de_GR)
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Mean-Difference Plot of JUN expression')}
+# plot test results, take JUN as an example
 plotMD(res_JUN, status = de_JUN)
-plotMD(res_JUNB, status = de_JUNB)
 ```
 
 
@@ -393,10 +390,11 @@ JUNB_down <- summary(de_JUNB)[1]
 JUNB_up <- summary(de_JUNB)[3]
 ```
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Numbers of differential expression sites across all ChIP-seq peak sets')}
 # create data frame to make barplot
 data <- data.frame(
-  Group = factor(c("DNase", "DNase", "GR", "GR", "JUN", "JUN", "JUNB", "JUNB"), levels = c("GR", "JUN", "JUNB", "DNase")),
+  Group = factor(c("DNase", "DNase", "GR", "GR", "JUN", "JUN", "JUNB", "JUNB"),
+                 levels = c("GR", "JUN", "JUNB", "DNase")),
   Category = c("Down", "Up", "Down", "Up", "Down", "Up", "Down", "Up"),
   Values = c(DNase_down, DNase_up, GR_down, GR_up, JUN_down, JUN_up, JUNB_down, JUNB_up)
 )

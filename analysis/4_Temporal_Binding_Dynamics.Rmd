@@ -10,6 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
+# Temporal Binding Dynamics
+
+In the pairwise comparisons analysis, we found that most of the colocated binding sites are found in non-dynamic peaks. We inferred that, this is because most of the TF dynamics happen between time point 0 and 1, and thus these differential binding sites can not be significantly detected if we do the differential analysis between time point 1 and 12, and actually aggregated in non-significant group. In this chapter, we are going to compare the peaks at different time points to verify this statement.
+
 ```{r}
 # import useful packages
 suppressPackageStartupMessages({
@@ -22,10 +26,6 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 ```
-
-# Temporal Binding Dynamics
-
-In the pairwise comparisons analysis, we found that most of the colocated binding sites are found in non-dynamic peaks. We inferred that, this is because most of the TF dynamics happen between time point 0 and 1, and thus these differential binding sites can not be significantly detected if we do the differential analysis between time point 1 and 12, and actually aggregated in non-significant group. In this chapter, we are going to compare the peaks at different time points to verify this statement.
 
 ```{r}
 # import peaks, only use replicate 2 for consistency and simplicity
@@ -49,7 +49,7 @@ DNase_t12 <- rtracklayer::import("data/peaks/DNase_t12_rep2.bed.gz", format = "n
 
 ### Use Upset plot to see the intersection
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of GR')}
 # GR
 suppressWarnings({
   GR_peaks <- list(GR_t1, GR_t12)
@@ -58,7 +58,7 @@ suppressWarnings({
 })
 ```
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of JUN')}
 # JUN
 suppressWarnings({
   JUN_peaks <- list(JUN_t1, JUN_t12)
@@ -67,7 +67,7 @@ suppressWarnings({
 })
 ```
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of JUNB')}
 # JUNB
 suppressWarnings({
   JUNB_peaks <- list(JUNB_t1, JUNB_t12)
@@ -82,7 +82,7 @@ So it's only true that GR dynamics happen between time point 0 and 1, but not th
 
 ## Co-occurrence analysis
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different ChIP-seq peaks at t1')}
 # t1
 suppressWarnings({
   t1_peaks <- list(GR_t1, JUN_t1, JUNB_t1)
@@ -91,7 +91,7 @@ suppressWarnings({
 })
 ```
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different ChIP-seq peaks at t12')}
 # t12
 suppressWarnings({
   t12_peaks <- list(GR_t12, JUN_t12, JUNB_t12)
@@ -226,7 +226,7 @@ Basically, if we focus on two groups of GR sites, (1) the ones that do not have 
 
 However, the number of group 2 is too small to make a conclusion. Most of the GR sites have JUN/JUNB sites at t12 (5521 out of 5591), and only 70 sites do not have JUN/JUNB sites at t12.
 
-```{r}
+```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Numbers of accessible sites for different GR sites at different time points')}
 # create data frame to make barplot
 data <- data.frame(
   Group = factor(c("Group 1", "Group 1", "Group 2", "Group 2"),
@@ -281,3 +281,24 @@ mcnemar.test(contingency_table)
 ```
 
 Actually the sample size for group 2 is too small that we can hardly get any statistical results from it. For group 1 we can see somewhat significant results (p<0.05), but I think it's not strong enough to make a conclusion. To summarize, in both groups, the changes of accessibility between t1 and t12 are not obvious. This is somewhat consistent with the statement in the original paper that "chromatin accessibility does not predetermine GR binding".
+
+
+# Conclusion and Discussion
+
+In our project, we are interested in the dynamics of GR, JUN and JUNB ChIP-seq and also of the chromatin accessibility during the treatment of dexamethasone, which is a GR-activating drug.
+
+We investigated the differential expression of GR, JUN, JUNB and DNase-seq data between time point 12 and time point 1. We found that most of the differential GR sites are actually decreased. We then tested the differential expression of GR ChIP-seq data between time point 12 and time point 0, and found that most of the sites are increased. This result demonstrates that the TF activity of GR is actually activated at the very beginning of synthetic GC dexamethasone exposure, i.e. between the time point 0 and time point 1, which is consistent with the original paper.
+
+We calculated the Jaccard Index for the dynamic and non-dynamic peaks, and visualized the results using heatmaps. We did not find a significant difference between the dynamic and non-dynamic peaks, which may be due to the fact that we used a different method to identify the dynamic peaks, or that the data we used was different from the original paper.
+
+We compared the binding sites of GR, JUN and JUNB at different time points. We found that, for GR, most of the binding sites at later time point were also present at early time point, and most of the dynamics happen between time point 0 and 1. However, this is not the case for JUN and JUNB. We also found that, the co-occurrence of GR, JUN and JUNB happens quite often at the beginning of the treatment, and the absolute number of co-occurrence peaks is decreasing at late stage of the treatment, however it becomes the most part of GR peaks.
+
+We are also interested in, to what extent JUN/JUNB colocalize within the GR sites, and found that the overlap is quite high. We also separated GR sites into two groups: the ones that gain JUN/JUNB sites, and the ones do not. We found that the group that gain JUN/JUNB sites show more accessibility at both time points than the group that do not. However, the changes of accessibility between time points are not obvious. We also performed statistical analysis to verify this statement, and found somewhat significant results for group 1, but not for group 2. To what extent the accessibility of GR sites is determined by the presence of JUN/JUNB sites is still an open question.
+
+# Reference
+
+McDowell I C, Barrera A, D'Ippolito A M, et al. Glucocorticoid receptor recruits to enhancers and drives activation by motif-directed binding[J]. Genome research, 2018, 28(9): 1272-1284.
+
+Biddie S C, John S, Sabo P J, et al. Transcription factor AP1 potentiates chromatin accessibility and glucocorticoid receptor binding[J]. Molecular cell, 2011, 43(1): 145-155.
+
+John S, Sabo P J, Thurman R E, et al. Chromatin accessibility pre-determines glucocorticoid receptor binding patterns[J]. Nature genetics, 2011, 43(3): 264-268.
