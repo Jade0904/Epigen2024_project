@@ -148,7 +148,7 @@ suppressWarnings({
 })
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Jaccard Index for Dynamic Peaks')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Jaccard Index for Dynamic Peaks')}
 # heatmap for dynamic peaks
 jac_dynamic_df <- as.data.frame(as.table(jac_dynamic))
 names(jac_dynamic_df) <- c("Var1", "Var2", "Value")
@@ -161,7 +161,7 @@ ggplot(jac_dynamic_df, aes(x = Var1, y = Var2, fill = Value)) +
         axis.text.y = element_text(angle = 0, hjust = 1))
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Jaccard Index for Non-dynamic Peaks')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Jaccard Index for Non-dynamic Peaks')}
 # heatmap for non-dynamic peaks
 jac_nondynamic_df <- as.data.frame(as.table(jac_nondynamic))
 names(jac_nondynamic_df) <- c("Var1", "Var2", "Value")

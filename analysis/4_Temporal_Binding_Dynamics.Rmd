@@ -49,7 +49,7 @@ DNase_t12 <- rtracklayer::import("data/peaks/DNase_t12_rep2.bed.gz", format = "n
 
 ### Use Upset plot to see the intersection
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of GR')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of GR')}
 # GR
 suppressWarnings({
   GR_peaks <- list(GR_t1, GR_t12)
@@ -58,7 +58,7 @@ suppressWarnings({
 })
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of JUN')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of JUN')}
 # JUN
 suppressWarnings({
   JUN_peaks <- list(JUN_t1, JUN_t12)
@@ -67,7 +67,7 @@ suppressWarnings({
 })
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of JUNB')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different Time Points of JUNB')}
 # JUNB
 suppressWarnings({
   JUNB_peaks <- list(JUNB_t1, JUNB_t12)
@@ -82,7 +82,7 @@ So it's only true that GR dynamics happen between time point 0 and 1, but not th
 
 ## Co-occurrence analysis
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different ChIP-seq peaks at t1')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different ChIP-seq peaks at t1')}
 # t1
 suppressWarnings({
   t1_peaks <- list(GR_t1, JUN_t1, JUNB_t1)
@@ -91,7 +91,7 @@ suppressWarnings({
 })
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different ChIP-seq peaks at t12')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Upset Plot for Intersect between Different ChIP-seq peaks at t12')}
 # t12
 suppressWarnings({
   t12_peaks <- list(GR_t12, JUN_t12, JUNB_t12)
@@ -226,7 +226,7 @@ Basically, if we focus on two groups of GR sites, (1) the ones that do not have 
 
 However, the number of group 2 is too small to make a conclusion. Most of the GR sites have JUN/JUNB sites at t12 (5521 out of 5591), and only 70 sites do not have JUN/JUNB sites at t12.
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Numbers of accessible sites for different GR sites at different time points')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Numbers of accessible sites for different GR sites at different time points')}
 # create data frame to make barplot
 data <- data.frame(
   Group = factor(c("Group 1", "Group 1", "Group 2", "Group 2"),

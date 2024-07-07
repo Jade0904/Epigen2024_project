@@ -102,7 +102,7 @@ peak_lengths_df_t12 <- do.call(rbind, list(
 ))
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Distribution of Peak Length at t1')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Distribution of Peak Length at t1')}
 # Plot histograms of peak lengths for t1
 plot_t1 <- ggplot(peak_lengths_df_t1, aes(x = Length, fill = Condition)) +
   geom_histogram(binwidth = 50, alpha = 0.6, position = "identity") +
@@ -113,7 +113,7 @@ plot_t1 <- ggplot(peak_lengths_df_t1, aes(x = Length, fill = Condition)) +
 plot_t1
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Distribution of Peak Length at t12')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Distribution of Peak Length at t12')}
 # Plot histograms of peak lengths for t12
 plot_t12 <- ggplot(peak_lengths_df_t12, aes(x = Length, fill = Condition)) +
   geom_histogram(binwidth = 50, alpha = 0.6, position = "identity") +
@@ -131,7 +131,7 @@ We can see that most of the peaks are around 200-300 bp in length for all condit
 genome <- BSgenome.Hsapiens.UCSC.hg38
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('View Motifs for JUN')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('View Motifs for JUN')}
 # Motif analysis for JUN
 JUNmotifs <- MotifDb::query(MotifDb, c("JUN"), "Hsapiens")
 JUNmotif <- JUNmotifs[["Hsapiens-HOCOMOCOv10-JUN_HUMAN.H10MO.A"]]
@@ -167,14 +167,12 @@ Of 14326 peaks of JUN at t1, 3135 (21.9%) contain a JUN motif.
 
 Of 56994 peaks of JUN at t12, 8543 (15.0%) contain a JUN motif.
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('View Motifs for JUNB')}
+```{r}
 # Motif analysis for JUNB
 JUNBmotifs <- MotifDb::query(MotifDb, c("JUNB"), "Hsapiens")
 JUNBmotif <- JUNBmotifs[["Hsapiens-HOCOMOCOv11-core-A-JUNB_HUMAN.H11MO.0.A"]]
-view_motifs(JUNBmotif)
+#view_motifs(JUNBmotif) # do not plot for simplicity
 ```
-
-This is very similar to the motif for JUN.
 
 ```{r}
 JUNBmotif2 <- convert_motifs(JUNBmotif, class="TFBSTools-PWMatrix")
@@ -206,7 +204,7 @@ Of 38990 peaks of JUNB at t12, 18060 (46.3%) contain a JUNB motif.
 
 Next, we will visualize the DNase-seq signals around motif occurrences for JUN at time point 1, as an example.
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('DNase-seq Signals around JUN Motif Occurrences')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('DNase-seq Signals around JUN Motif Occurrences')}
 # prepare the list of tracks
 tracks <- c("DNase_t1"="data/aligned/DNase_t1_rep2.bigWig",
             "DNase_t12"="data/aligned/DNase_t12_rep2.bigWig")
@@ -256,10 +254,9 @@ saveRDS(ese, "data/se/ChIP_ese.rds")
 ```{r}
 # read ese object
 ese <- readRDS("data/se/ChIP_ese.rds")
-table(rowData(ese)$cluster)
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Clustered Heatmap of ChIP-seq Peaks at t1')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Clustered Heatmap of ChIP-seq Peaks at t1')}
 # plot the clustered heatmap
 colors <- c("1"="red", "2"="blue", "3"="darkgreen", "4"="purple", "5"="orange")
 plotEnrichedHeatmaps(ese, row_split = rowData(ese)$cluster,

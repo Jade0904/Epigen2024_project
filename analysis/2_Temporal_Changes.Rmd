@@ -49,14 +49,13 @@ Because GR narrowPeak data at time point 0 (t0) is missing from the original pap
 ```{r}
 # Show the narrowPeak files
 peaks <- list.files("data/peaks")
-peaks # show the files we use
 
 # import peaks
 peaks <- lapply(file.path("data/peaks", peaks), rtracklayer::import, format="narrowPeak")
 
 # create consensus peaks
 merged_peaks <- reduce(unlist(GRangesList(peaks)), with.revmap=TRUE)
-length(merged_peaks)
+#length(merged_peaks) #135766
 ```
 
 ### Getting counts per peak
@@ -79,7 +78,6 @@ saveRDS(se, "data/se/all_se.rds") # save the data for later use
 ```{r}
 # read SE object
 se <- readRDS("data/se/all_se.rds")
-se # show se object
 
 # change colnames
 colnames(se) <- gsub("\\.bam", "", colnames(se))
@@ -113,7 +111,7 @@ rownames(se) <- as.character(granges(se))
 
 Here we use the famous edgeR package to do the differential analysis. We first prepare the DGEList object, then calculate normalization factors, estimate NB dispersion, and finally estimate QL dispersions.
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Plot Biological Coefficient of Variation')}
+```{r}
 # prepare DGE object
 y <- DGEList(counts=assays(se)$counts)
 
@@ -123,9 +121,8 @@ y <- calcNormFactors(y)
 # specify model matrix based on group
 mm <- model.matrix(~0+group, data = as.data.frame(colData(se)))
 
-# estimate NB dispersion and visualize
+# estimate NB dispersion
 y <- estimateDisp(y, mm, robust = TRUE)
-plotBCV(y)
 ```
 
 edgeR uses the negative binomial distribution to model the read counts. The dispersion parameter of the NB distribution accounts for variability between biological replicates. Except NB dispersion, we also would like to estimate quasi-likelihood (QL) dispersions.
@@ -133,7 +130,6 @@ edgeR uses the negative binomial distribution to model the read counts. The disp
 ```{r}
 # estimate QL dispersions
 fit <- glmQLFit(y, mm, robust = TRUE)
-head(fit$coefficients)
 ```
 
 
@@ -186,12 +182,10 @@ JUNB_peaks <- reduce(unlist(GRangesList(JUNB_peaks)), with.revmap=TRUE)
 ### we intersect the following results from differential analysis
 ### with the set of peaks from each assay
 
-
 # use 0.1 as significant threshold to increase sensitivity
 sig.p <- 0.1
 # minimum absolute logFC
 lfc <- 0
-
 
 ### DNase
 tab_DNase <- as.data.frame(topTags(res_DNase, n = Inf)$table)
@@ -369,11 +363,6 @@ de_JUNB <- decideTests(res_JUNB, p.value = 0.1)
 #summary(de_DNase)
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Mean-Difference Plot of JUN expression')}
-# plot test results, take JUN as an example
-plotMD(res_JUN, status = de_JUN)
-```
-
 
 Here we set p value threshold as 0.1 to have higher sensitivity.
 
@@ -390,7 +379,7 @@ JUNB_down <- summary(de_JUNB)[1]
 JUNB_up <- summary(de_JUNB)[3]
 ```
 
-```{r, out.width=c('80%'), fig.align='center', fig.cap=c('Numbers of differential expression sites across all ChIP-seq peak sets')}
+```{r, out.width=c('60%'), fig.align='center', fig.cap=c('Numbers of differential expression sites across all ChIP-seq peak sets')}
 # create data frame to make barplot
 data <- data.frame(
   Group = factor(c("DNase", "DNase", "GR", "GR", "JUN", "JUN", "JUNB", "JUNB"),
@@ -436,7 +425,6 @@ saveRDS(se_GR, "data/se/GR_se.rds") # save the data for later use
 ```{r}
 # read SE object
 se_GR <- readRDS("data/se/GR_se.rds")
-se_GR
 
 # change colnames
 colnames(se_GR) <- gsub("\\.bam", "", colnames(se_GR))
